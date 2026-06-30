@@ -1,1 +1,2492 @@
 
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hometown Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  @font-face {
+    font-family: 'Dyslexie';
+    src: local('Dyslexie Regular'), local('Dyslexie');
+    font-display: swap;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --access-font-scale: 1;
+    --bg: #fdf6ec;
+    --surface: #ffffff;
+    --surface2: #fff1e0;
+    --border: #f5d9b0;
+    --text: #1a1714;
+    --text2: #5a6070;
+    --text3: #8a95a3;
+    --accent: #D62828;
+    --accent2: #b81f1f;
+    --green: #15803d;
+    --radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+    --header-bg: rgba(247,245,240,0.92);
+    --modal-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #f5d9b0;
+    --input-color: #1a1714;
+  }
+  body.dark {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e334a;
+    --text: #f0f2f8;
+    --text2: #9aa3bf;
+    --text3: #5a6380;
+    --green: #4ade80;
+    --shadow: 0 2px 12px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+    --header-bg: rgba(15,17,23,0.95);
+    --modal-bg: #1a1d27;
+    --input-bg: #22263a;
+    --input-border: #2e334a;
+    --input-color: #f0f2f8;
+  }
+  body.dark #header { background: var(--header-bg); }
+  body.dark .modal { background: var(--modal-bg); }
+  body.dark input, body.dark select, body.dark textarea {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--input-color) !important;
+  }
+  body.dark .biz-card { background: var(--surface); border-color: var(--border); }
+  body.dark .sidebar-card { background: var(--surface); border-color: var(--border); }
+  body.dark #map-legend { background: rgba(26,29,39,0.97); border-color: var(--border); }
+  body.dark .chat-window { background: var(--surface); border-color: var(--border); }
+  body.dark .msg-bubble { background: var(--surface2); color: var(--text); }
+  body.dark .chat-msg.user .msg-bubble { background: var(--accent); color: #fff; }
+  body.dark #chat-input-row { border-color: var(--border); background: var(--surface); }
+  body.dark .modal-body { background: var(--modal-bg); }
+  body.dark .tab-content { background: var(--modal-bg); }
+  body.dark .review-card { background: var(--surface2); border-color: var(--border); }
+  body.dark .detail-info-row { border-color: var(--border); }
+  body.dark .deal-card { background: var(--surface2) !important; border-color: var(--border) !important; }
+  body.dark .section-header { background: var(--surface); border-color: var(--border); }
+  body.dark .filter-chip { border-color: var(--border); color: var(--text2); }
+  body.dark .how-to-modal, body.dark .signup-modal, body.dark .access-modal { background: var(--modal-bg); }
+
+  body {
+    font-family: Futura, "Trebuchet MS", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: calc(15px * var(--access-font-scale));
+    line-height: 1.5;
+  }
+
+  body.access-text-small { --access-font-scale: 0.92; zoom: 0.96; }
+  body.access-text-large { --access-font-scale: 1.16; zoom: 1.08; }
+  body.dyslexia-font,
+  body.dyslexia-font * {
+    font-family: Dyslexie, OpenDyslexic, "Atkinson Hyperlegible", Verdana, Arial, sans-serif !important;
+    letter-spacing: 0.01em;
+    word-spacing: 0.08em;
+  }
+  body.high-contrast {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface2: #f4f4f4;
+    --border: #111111;
+    --text: #000000;
+    --text2: #111111;
+    --text3: #333333;
+    --accent: #9c0606;
+    --accent2: #6f0000;
+    --header-bg: rgba(255,255,255,0.98);
+    --modal-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-border: #111111;
+    --input-color: #000000;
+    --shadow: none;
+    --shadow-lg: none;
+  }
+  body.high-contrast.dark {
+    --bg: #000000;
+    --surface: #000000;
+    --surface2: #111111;
+    --border: #ffffff;
+    --text: #ffffff;
+    --text2: #f5f5f5;
+    --text3: #dddddd;
+    --header-bg: rgba(0,0,0,0.98);
+    --modal-bg: #000000;
+    --input-bg: #000000;
+    --input-border: #ffffff;
+    --input-color: #ffffff;
+  }
+  body.high-contrast .btn,
+  body.high-contrast .icon-btn,
+  body.high-contrast .nav-btn,
+  body.high-contrast .filter-chip,
+  body.high-contrast .sidebar-card,
+  body.high-contrast .biz-card,
+  body.high-contrast .section-header,
+  body.high-contrast input,
+  body.high-contrast select,
+  body.high-contrast textarea {
+    border-color: var(--border) !important;
+  }
+  body.high-contrast :focus-visible {
+    outline: 3px solid #f77f00 !important;
+    outline-offset: 3px;
+  }
+  body.reduce-motion *,
+  body.reduce-motion *::before,
+  body.reduce-motion *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .hidden { display: none !important; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .items-start { align-items: flex-start; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 16px; }
+  .flex-1 { flex: 1; }
+  .shrink-0 { flex-shrink: 0; }
+  .w-full { width: 100%; }
+  .text-sm { font-size: 13px; }
+  .text-xs { font-size: 11px; }
+  .font-bold { font-weight: 700; }
+  .font-medium { font-weight: 500; }
+  .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .relative { position: relative; }
+  .absolute { position: absolute; }
+  .overflow-hidden { overflow: hidden; }
+  .cursor-pointer { cursor: pointer; }
+  .serif,
+  h1, h2, h3,
+  .login-title,
+  .header-title,
+  .sidebar-title,
+  #map-legend-title,
+  .section-title,
+  .modal-title,
+  .rating-bars-title,
+  .captcha-title,
+  .chat-header-title,
+  .util-modal-title,
+  .howto-title,
+  .access-title,
+  .biz-name,
+  .detail-title,
+  .empty-title {
+    font-family: 'Playfair Display', Georgia, serif;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px 18px; border-radius: 10px; font-family: inherit;
+    font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    transition: all 0.15s ease; outline: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 700; color: #fff;
+  }
+  .badge-outline {
+    background: transparent;
+    font-size: 11px; font-weight: 600; padding: 3px 10px;
+    border-radius: 99px; border: 1.5px solid;
+  }
+
+  input, select, textarea {
+    font-family: inherit; font-size: 14px;
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; width: 100%;
+    color: var(--text); outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; }
+  .input-icon { position: relative; }
+  .input-icon input { padding-left: 38px; }
+  .input-icon .icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--text3); pointer-events: none; width: 16px; height: 16px;
+  }
+
+  .stars { display: flex; gap: 2px; }
+  .star { font-size: 16px; color: #d1cdc7; cursor: default; }
+  .star.filled { color: #FCBF49; }
+  .star.interactive { cursor: pointer; transition: transform 0.1s; }
+  .star.interactive:hover { transform: scale(1.2); }
+  .stars-sm .star { font-size: 12px; }
+  .stars-lg .star { font-size: 28px; }
+
+  /* ══ LOGIN SCREEN ══ */
+  #login-screen {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #d62828 0%, #f77f00 48%, #fcbf49 100%);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    position: relative; overflow: hidden;
+  }
+  #login-screen::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 18% 28%, rgba(255,255,255,0.30) 0%, transparent 48%),
+                radial-gradient(ellipse at 82% 74%, rgba(255,237,163,0.34) 0%, transparent 52%);
+  }
+  .login-dots {
+    position: absolute; inset: 0; overflow: hidden;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.18) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .login-card {
+    position: relative; z-index: 1;
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.72);
+    border-radius: 24px; padding: 40px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 22px 70px rgba(127, 29, 29, 0.24);
+  }
+  .login-logo {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px; box-shadow: 0 8px 24px rgba(0,95,115,0.24);
+    overflow: hidden;
+  }
+  .logo-image {
+    width: 100%; height: 100%; object-fit: contain; display: block;
+  }
+  .login-title { font-size: 24px; font-weight: 700; color: #003049; text-align: center; line-height: 1.2; }
+  .login-sub { color: #005f73; text-align: center; font-size: 14px; margin-top: 6px; }
+  .login-label { display: block; font-size: 13px; font-weight: 600; color: #005f73; margin-bottom: 6px; }
+  .login-input {
+    background: rgba(255,255,255,0.88) !important;
+    border: 1.5px solid rgba(0,95,115,0.24) !important;
+    color: #003049 !important; border-radius: 12px !important;
+  }
+  .login-input::placeholder { color: rgba(0,95,115,0.48) !important; }
+  .login-input:focus { border-color: #005f73 !important; box-shadow: 0 0 0 3px rgba(0,95,115,0.14); }
+  .login-btn {
+    width: 100%; margin-top: 20px; padding: 14px;
+    background: #005f73; color: #fff; border: none;
+    border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+    transition: background 0.15s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .login-btn:hover { background: #003049; }
+  .login-btn:active { transform: scale(0.98); }
+  .login-note { color: rgba(0,48,73,0.58); font-size: 12px; text-align: center; margin-top: 14px; }
+  .login-signup-btn {
+    width: 100%; margin-top: 10px; padding: 13px;
+    background: rgba(0,95,115,0.08); color: #003049;
+    border: 1.5px solid rgba(0,95,115,0.22);
+    border-radius: 12px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .login-signup-btn:hover { background: rgba(0,95,115,0.14); border-color: rgba(0,95,115,0.42); color: #003049; }
+  .login-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 18px 0 12px; color: rgba(0,48,73,0.52); font-size: 12px;
+  }
+  .login-divider::before, .login-divider::after {
+    content: ''; flex: 1; height: 1px; background: rgba(0,95,115,0.18);
+  }
+  .login-social-row { display: flex; gap: 8px; }
+  .login-social-btn {
+    flex: 1; padding: 10px; border-radius: 10px;
+    background: rgba(255,255,255,0.68); border: 1px solid rgba(0,95,115,0.16);
+    color: #005f73; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .login-social-btn:hover { background: #fff; color: #003049; }
+
+  /* ══ MAIN APP ══ */
+  #app-screen { display: none; flex-direction: column; min-height: 100vh; }
+
+  #header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--header-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px; gap: 16px;
+  }
+  .header-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .header-logo-icon {
+    width: 34px; height: 34px; background: #fff;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,48,73,0.4);
+    overflow: hidden;
+  }
+  .header-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .header-sub { font-size: 11px; color: var(--text3); }
+  .header-nav {
+    display: flex; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 12px; padding: 3px; gap: 2px;
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 9px;
+    font-size: 13px; font-weight: 600; color: var(--text2);
+    background: none; border: none; cursor: pointer;
+    font-family: inherit; transition: all 0.15s; white-space: nowrap;
+    position: relative;
+  }
+  .nav-btn.active { background: var(--surface); color: var(--accent); box-shadow: var(--shadow); }
+  .nav-btn:not(.active):hover { color: var(--text); }
+  .nav-badge {
+    background: var(--accent); color: #fff;
+    font-size: 10px; font-weight: 700;
+    min-width: 16px; height: 16px; border-radius: 99px;
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 4px;
+  }
+  .header-right { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); background: var(--surface);
+    cursor: pointer; color: var(--text2); transition: all 0.15s;
+  }
+  .icon-btn:hover { color: #003049; border-color: #003049; }
+
+  #main { display: flex; gap: 20px; padding: 20px 24px 40px; flex: 1; }
+
+  #sidebar {
+    width: 240px; flex-shrink: 0;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+  .sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; }
+  .sidebar-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+  .cat-filter-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 9px; cursor: pointer;
+    transition: background 0.12s; font-size: 13px; font-weight: 500;
+    color: var(--text2); border: none; background: none;
+    font-family: inherit; width: 100%; text-align: left;
+  }
+  .cat-filter-item:hover { background: var(--surface2); }
+  .cat-filter-item.active { background: var(--surface2); color: var(--text); font-weight: 600; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .cat-count { margin-left: auto; font-size: 11px; color: var(--text3); }
+
+  #content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+  #search-box { flex: 1; }
+  #search-input { padding: 8px 12px 8px 36px; font-size: 13px; }
+  #sort-select { width: auto; padding: 8px 32px 8px 12px; font-size: 13px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6560' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; }
+  .filter-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 600;
+    border: 1.5px solid var(--border); background: transparent;
+    color: var(--text2); cursor: pointer; transition: all 0.12s; font-family: inherit;
+    white-space: nowrap;
+  }
+  .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  #map-container {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: visible;
+    height: 560px; position: relative;
+  }
+  #map { width: 100%; height: 100%; border-radius: var(--radius); overflow: hidden; }
+  .leaflet-pane, .leaflet-top, .leaflet-bottom, .leaflet-control { z-index: 400 !important; }
+  .leaflet-map-pane { z-index: 200 !important; }
+  #map-legend {
+    position: absolute; bottom: 12px; left: 12px; z-index: 500;
+    background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; max-width: 200px;
+    max-height: 260px; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+  }
+  #map-legend-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-size: 11px; color: var(--text2); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  #map-cat-chips {
+    display: flex; gap: 6px; overflow-x: auto; padding: 12px 0 4px;
+    scrollbar-width: none;
+  }
+  #map-cat-chips::-webkit-scrollbar { display: none; }
+
+  .custom-popup .leaflet-popup-content-wrapper {
+    padding: 0 !important; border-radius: 14px !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+    border: 1px solid #e5e0d8 !important; overflow: hidden !important;
+  }
+  .custom-popup .leaflet-popup-content { margin: 0 !important; width: auto !important; }
+  .custom-popup .leaflet-popup-tip-container { margin-top: -1px; }
+  .custom-popup .leaflet-popup-tip { box-shadow: none !important; }
+  .custom-popup .leaflet-popup-close-button { color: rgba(255,255,255,0.8) !important; font-size: 18px !important; top: 8px !important; right: 10px !important; z-index: 10; }
+  .custom-popup .leaflet-popup-close-button:hover { color: #fff !important; }
+
+  #biz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .biz-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    position: relative;
+  }
+  .biz-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: #d4cfc8; }
+  .biz-card-stripe { height: 4px; }
+  .biz-card-body { padding: 16px; }
+  .biz-card-top { display: flex; align-items: flex-start; gap: 12px; }
+  .biz-icon-wrap {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .biz-name { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  .biz-name:hover { color: var(--accent); }
+  .biz-desc { font-size: 12px; color: var(--text2); margin-top: 8px; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .biz-footer { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .fav-btn {
+    position: absolute; top: 14px; right: 14px;
+    width: 30px; height: 30px; border-radius: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; transition: all 0.15s;
+  }
+  .fav-btn:hover { background: #fef2f2; border-color: #fca5a5; }
+  .fav-btn.active { background: #fef2f2; border-color: #fca5a5; }
+  .biz-addr { font-size: 11px; color: var(--text3); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    background: var(--surface); border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-size: 17px; font-weight: 700; color: var(--text); }
+  .empty-sub { font-size: 13px; color: var(--text3); margin-top: 6px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(26,23,20,0.5);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.2);
+    width: 100%; max-width: 640px;
+    max-height: 88vh; display: flex; flex-direction: column;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.2s;
+    overflow: hidden;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+  .modal-header { padding: 0 20px; height: 140px; position: relative; display: flex; align-items: flex-end; flex-shrink: 0; }
+  .modal-header-bg { position: absolute; inset: 0; }
+  .modal-header-content { position: relative; z-index: 1; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; padding-bottom: 18px; }
+  .modal-biz-icon { width: 52px; height: 52px; border-radius: 14px; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .modal-title { font-size: 22px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  .modal-rating-line { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+  .modal-close {
+    width: 32px; height: 32px; border-radius: 99px;
+    background: rgba(0,0,0,0.2); border: none; color: #fff;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+    transition: background 0.15s; align-self: flex-start; margin-top: 12px;
+  }
+  .modal-close:hover { background: rgba(0,0,0,0.4); }
+  .modal-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .modal-tab {
+    flex: 1; padding: 12px; text-align: center; font-size: 13px; font-weight: 600;
+    color: var(--text3); border: none; background: none; cursor: pointer;
+    border-bottom: 2px solid transparent; transition: all 0.15s; font-family: inherit;
+  }
+  .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+  .modal-tab-panel { display: none; }
+  .modal-tab-panel.active { display: block; }
+
+  .detail-actions { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .detail-desc { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 16px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .info-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border-radius: 10px; padding: 10px 12px;
+    font-size: 12px; color: var(--text2);
+  }
+  .info-item span:first-child { font-size: 15px; }
+  .rating-bars { background: var(--surface2); border-radius: 12px; padding: 14px; }
+  .rating-bars-title { font-size: 12px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+  .rating-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .rating-bar-label { font-size: 11px; font-weight: 700; color: var(--text3); width: 16px; }
+  .rating-bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .rating-bar-fill { height: 100%; background: #FCBF49; border-radius: 99px; transition: width 0.4s; }
+  .rating-bar-count { font-size: 11px; color: var(--text3); width: 16px; text-align: right; }
+
+  .deal-card {
+    display: flex; align-items: flex-start; gap: 12px;
+    background: linear-gradient(135deg, #fff1e0, #fff8ea);
+    border: 1px solid #f7c79a; border-radius: 12px; padding: 14px; margin-bottom: 10px;
+  }
+  .deal-icon { font-size: 20px; flex-shrink: 0; }
+  .deal-text { font-size: 13px; font-weight: 700; color: #b91c1c; }
+  .deal-sub { font-size: 11px; color: #D62828; margin-top: 3px; }
+  .deal-badge { margin-left: auto; font-size: 10px; font-weight: 700; background: #fdeede; color: #c2410c; padding: 3px 8px; border-radius: 6px; flex-shrink: 0; }
+
+  .review-card {
+    background: var(--surface2); border-radius: 12px; padding: 14px;
+    margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .review-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+  .reviewer-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #003049; color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .reviewer-name { font-size: 13px; font-weight: 700; }
+  .review-date { font-size: 11px; color: var(--text3); }
+  .review-helpful { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 3px; }
+  .review-text { font-size: 13px; color: var(--text2); line-height: 1.5; margin-top: 8px; }
+
+  #review-modal .modal { max-width: 440px; }
+  .review-step { display: none; }
+  .review-step.active { display: block; }
+  .progress-bar { height: 3px; background: var(--border); border-radius: 99px; margin-bottom: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; }
+  .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .form-group { margin-bottom: 16px; }
+  .stars-picker { display: flex; justify-content: center; gap: 6px; padding: 14px; background: var(--surface2); border-radius: 12px; border: 1px solid var(--border); }
+  .stars-picker .star { font-size: 32px; cursor: pointer; transition: transform 0.1s; }
+  .stars-picker .star:hover { transform: scale(1.15); }
+  .rating-label-text { text-align: center; font-size: 12px; color: var(--text3); margin-top: 6px; font-weight: 600; }
+
+  .captcha-box { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 16px; }
+  .captcha-title { font-size: 13px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .captcha-sub { font-size: 12px; color: #16a34a; margin-bottom: 12px; }
+  .captcha-equation { display: flex; align-items: center; gap: 10px; }
+  .captcha-q { font-size: 20px; font-weight: 800; color: var(--text); background: #fff; border: 1px solid #86efac; border-radius: 10px; padding: 8px 16px; }
+  .captcha-input { width: 72px !important; text-align: center; font-size: 20px; font-weight: 800; border-color: #86efac !important; }
+  .captcha-error { font-size: 12px; color: var(--accent); font-weight: 700; margin-top: 6px; }
+  .review-honeypot {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px !important;
+    height: 1px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+  .captcha-trust-note { font-size: 11px; color: #15803d; margin-top: 10px; line-height: 1.4; }
+  .review-preview { background: var(--surface2); border-radius: 12px; padding: 12px; border: 1px solid var(--border); margin-bottom: 14px; }
+  .review-preview-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .review-preview-text { font-size: 13px; color: var(--text2); margin-top: 6px; }
+
+  #toast {
+    position: fixed; bottom: 24px; right: 24px; z-index: 600;
+    background: #1a1714; color: #fff;
+    padding: 12px 18px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    transform: translateY(20px); opacity: 0;
+    transition: transform 0.25s, opacity 0.25s;
+    pointer-events: none;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+
+  .section-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+  .section-title { font-size: 18px; font-weight: 800; }
+  .section-sub { font-size: 12px; color: var(--text3); }
+
+  .badge-verified { background: transparent; color: #15803d; border: 1.5px solid #86efac; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; }
+  .badge-trending { background: transparent; color: #c2410c; border: 1.5px solid #F77F00; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; }
+  .badge-deal { background: transparent; color: #D62828; border: 1.5px solid #f0a8a8; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px; }
+
+  @media (max-width: 768px) {
+    #main { flex-direction: column; }
+    #sidebar { width: 100%; }
+    #sidebar.hidden { display: none !important; }
+    #main { padding: 12px; }
+    #header { padding: 0 12px; }
+    .header-title { display: none; }
+    #biz-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ══ CHATBOT ══ */
+  #chat-fab {
+    position: fixed; bottom: 28px; right: 28px; z-index: 300;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #003049; color: #fff; border: none;
+    cursor: pointer; box-shadow: 0 4px 20px rgba(0,48,73,0.5);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-size: 22px;
+  }
+  #chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,48,73,0.6); }
+  #chat-fab.open { transform: scale(1); background: #6b6560; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  #chat-fab .notif-dot {
+    position: absolute; top: 2px; right: 2px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #F77F00; border: 2px solid var(--bg);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+
+  #chat-window {
+    position: fixed; bottom: 28px; right: 96px; z-index: 300;
+    width: 380px; height: 560px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; box-shadow: 0 16px 60px rgba(0,0,0,0.15);
+    display: none; flex-direction: column; overflow: hidden;
+    transform: translateX(16px) scale(0.97); opacity: 0;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  #chat-window.open { display: flex; transform: translateX(0) scale(1); opacity: 1; }
+  #chat-header {
+    background: linear-gradient(135deg, #003049, #00202f);
+    padding: 16px 18px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .chat-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .chat-header-title { font-size: 14px; font-weight: 700; color: #fff; }
+  .chat-header-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  #chat-close {
+    background: rgba(255,255,255,0.15); border: none; color: #fff;
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: background 0.15s; margin-left: 6px;
+  }
+  #chat-close:hover { background: rgba(255,255,255,0.3); }
+
+  #chat-messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .chat-msg { display: flex; gap: 8px; align-items: flex-end; animation: msg-in 0.2s ease; }
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .chat-msg.user { flex-direction: row-reverse; }
+  .msg-bubble {
+    max-width: 80%; padding: 10px 14px; border-radius: 16px;
+    font-size: 13px; line-height: 1.5; word-break: break-word;
+  }
+  .chat-msg.bot .msg-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .chat-msg.user .msg-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .msg-avatar.bot-av { background: var(--surface2); font-size: 16px; border: 1px solid var(--border); }
+  .typing-indicator {
+    display: flex; gap: 4px; align-items: center;
+    padding: 12px 14px; background: var(--surface2);
+    border-radius: 16px; border-bottom-left-radius: 4px;
+    width: fit-content;
+  }
+  .typing-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--text3);
+    animation: typing 1.2s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typing {
+    0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-5px); opacity: 1; }
+  }
+  .chat-suggestions { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 10px; }
+  .chat-suggestion {
+    font-size: 11px; font-weight: 600; color: #b8460e;
+    background: #fff1e0; border: 1px solid #fbcd95;
+    padding: 5px 10px; border-radius: 99px; cursor: pointer;
+    transition: background 0.12s; border: none; font-family: inherit;
+    white-space: nowrap; border: 1px solid #fbcd95;
+  }
+  .chat-suggestion:hover { background: #fde2bd; }
+  #chat-input-row {
+    display: flex; gap: 8px; padding: 12px 16px;
+    border-top: 1px solid var(--border); flex-shrink: 0;
+    background: var(--surface);
+  }
+  #chat-input {
+    flex: 1; padding: 9px 14px; border-radius: 99px;
+    border: 1.5px solid var(--border); font-size: 13px;
+    background: var(--surface2); resize: none;
+    transition: border-color 0.15s; height: 38px;
+    line-height: 1.4; outline: none; font-family: inherit;
+  }
+  #chat-input:focus { border-color: var(--accent); }
+  #chat-send {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent); border: none; color: #fff;
+    cursor: pointer; font-size: 16px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, transform 0.1s;
+  }
+  #chat-send:hover { background: var(--accent2); }
+  #chat-send:active { transform: scale(0.92); }
+  #chat-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .msg-bubble a { color: inherit; text-decoration: underline; }
+  .msg-bubble strong { font-weight: 700; }
+  .msg-bubble ul { padding-left: 16px; margin: 4px 0; }
+  .msg-bubble li { margin-bottom: 3px; }
+
+  /* ══ UTILITY MODALS ══ */
+  .util-overlay {
+    position: fixed; inset: 0; z-index: 20000;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .util-overlay.open { opacity: 1; pointer-events: all; }
+  .util-modal {
+    background: var(--surface); border-radius: 22px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+    width: 100%; max-width: 500px;
+    max-height: 88vh; display: flex; flex-direction: column;
+    transform: translateY(16px) scale(0.97);
+    transition: transform 0.2s;
+    overflow: hidden;
+  }
+  .util-overlay.open .util-modal { transform: translateY(0) scale(1); }
+  .util-modal-header { padding: 28px 28px 22px; color: #fff; flex-shrink: 0; }
+  .util-modal-title { font-size: 20px; font-weight: 800; }
+  .util-modal-sub { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+  .util-modal-body { padding: 24px 28px 28px; overflow-y: auto; flex: 1; }
+  .util-field { margin-bottom: 14px; }
+  .util-label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 5px; }
+  .util-input {
+    width: 100%; padding: 10px 14px; border-radius: 10px;
+    border: 1.5px solid var(--border); background: var(--surface2);
+    color: var(--text); font-size: 14px; font-family: inherit;
+    transition: border-color 0.15s;
+  }
+  .util-input:focus { outline: none; border-color: var(--accent); }
+  .password-requirements {
+    display: grid; gap: 6px; margin-top: 8px; padding: 10px 12px;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .password-req { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
+  .password-req::before { content: '○'; font-size: 13px; color: var(--text3); }
+  .password-req.met { color: #15803d; font-weight: 700; }
+  .password-req.met::before { content: '✓'; color: #15803d; }
+  .signup-error { font-size: 12px; color: var(--accent); font-weight: 700; margin: 8px 0 10px; }
+  .util-btn-primary {
+    width: 100%; padding: 13px; background: var(--accent); color: #fff;
+    border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: background 0.15s;
+  }
+  .util-btn-primary:hover { background: var(--accent2); }
+  .util-btn-secondary {
+    width: 100%; padding: 11px; background: transparent; color: var(--accent);
+    border: 1.5px solid var(--border); border-radius: 12px; font-size: 13px; font-weight: 600;
+    cursor: pointer; font-family: inherit; margin-top: 10px; transition: all 0.15s;
+  }
+  .util-btn-secondary:hover { background: var(--surface2); }
+  .howto-step { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .howto-step:last-of-type { border-bottom: none; }
+  .howto-num { width: 28px; height: 28px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .howto-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .howto-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .access-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .access-row:last-of-type { border-bottom: none; }
+  .access-icon-wrap { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .access-title { font-size: 14px; font-weight: 700; color: var(--text); }
+  .access-desc { font-size: 12px; color: var(--text3); margin-top: 1px; }
+  .access-controls { display: flex; gap: 4px; flex-shrink: 0; }
+  .access-ctrl-btn { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface2); color: var(--text2); font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px; transition: all 0.15s; }
+  .access-ctrl-btn:hover, .access-ctrl-btn.access-ctrl-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .access-toggle-wrap { flex-shrink: 0; }
+  .access-toggle { position: relative; display: inline-block; width: 42px; height: 24px; cursor: pointer; }
+  .access-toggle input { opacity: 0; width: 0; height: 0; }
+  .access-toggle-slider { position: absolute; inset: 0; border-radius: 99px; background: var(--border); transition: background 0.2s; }
+  .access-toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2); }
+  .access-toggle input:checked + .access-toggle-slider { background: var(--accent); }
+  .access-toggle input:checked + .access-toggle-slider::before { transform: translateX(18px); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-dots"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <img class="logo-image" src="hometown-hub-logo.png" alt="Hometown Hub logo"/>
+    </div>
+    <h1 class="login-title">Hometown Hub</h1>
+    <p class="login-sub">Discover & support your local community</p>
+    <div style="margin-top:8px">
+      <label class="login-label">Email address</label>
+      <div class="input-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        <input type="email" id="login-email" class="login-input" value="user@community.org" placeholder="you@email.com"/>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label class="login-label">Password</label>
+      <div class="input-icon">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="login-pass" class="login-input" value="password" placeholder="••••••••"/>
+      </div>
+    </div>
+    <button class="login-btn" onclick="doLogin()">
+      Sign In
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </button>
+    <button class="login-signup-btn" onclick="openSignupModal()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      Create an Account
+    </button>
+    <div class="login-divider"><span>or continue with</span></div>
+    <div class="login-social-row">
+      <button class="login-social-btn" title="Sign in with Google">
+        <svg width="16" height="16" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+        Google
+      </button>
+      <button class="login-social-btn" title="Sign in with Apple">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Apple
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app-screen">
+  <header id="header">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <img class="logo-image" src="hometown-hub-logo.png" alt="Hometown Hub logo"/>
+      </div>
+      <div>
+        <div class="header-title">Hometown Hub</div>
+      </div>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn active" id="nav-map" onclick="switchTab('map')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+        Map
+      </button>
+      <button class="nav-btn" id="nav-list" onclick="switchTab('list')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        Directory
+      </button>
+      <button class="nav-btn" id="nav-fav" onclick="switchTab('favorites')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Saved
+      </button>
+    </nav>
+    <div class="header-right">
+      <button class="btn btn-primary btn-sm" onclick="openRegisterBusinessModal()" title="Register a small business">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9h.01"/><path d="M9 13h.01"/><path d="M9 17h.01"/></svg>
+        Add Business
+      </button>
+      <button class="icon-btn" onclick="openAccessModal()" title="Accessibility options" aria-label="Open accessibility options" style="font-weight:800;font-size:13px">
+        Aa
+      </button>
+      <button class="icon-btn" onclick="openHowToModal()" title="How to use">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+      <button class="icon-btn" id="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode">
+        <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+      <button class="icon-btn" onclick="doLogout()" title="Sign out">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside id="sidebar" class="hidden">
+      <div class="sidebar-card">
+        <div class="sidebar-title">Search</div>
+        <div class="input-icon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="sidebar-search" placeholder="Find a business..." oninput="renderList()" style="font-size:13px;padding:8px 12px 8px 34px"/>
+        </div>
+        <div style="margin-top:12px">
+          <div class="sidebar-title" style="margin-bottom:8px">Sort</div>
+          <select id="toolbar-sort" onchange="renderList()" style="font-size:13px">
+            <option value="rating">Highest Rated</option>
+            <option value="reviews">Most Reviews</option>
+            <option value="name">A - Z</option>
+            <option value="deals">Has Deals First</option>
+          </select>
+        </div>
+      </div>
+      <div class="sidebar-card" style="flex:1;overflow:hidden">
+        <div class="sidebar-title">Categories</div>
+        <div id="cat-filter-list" style="overflow-y:auto;max-height:360px"></div>
+      </div>
+    </aside>
+
+    <div id="content">
+      <div id="panel-map">
+        <div id="map-cat-chips"></div>
+        <div id="map-container">
+          <div id="map"></div>
+          <div id="map-legend">
+            <div id="map-legend-title">Legend</div>
+            <div id="map-legend-items"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="panel-list" class="hidden">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Local Directory</div>
+            <div class="section-sub" id="list-count">70 businesses</div>
+          </div>
+        </div>
+        <div id="biz-grid"></div>
+      </div>
+
+      <div id="panel-fav" class="hidden">
+        <div class="section-header">
+          <div>
+            <div class="section-title">Saved Businesses</div>
+            <div class="section-sub" id="fav-list-count">0 saved</div>
+          </div>
+        </div>
+        <div id="fav-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal" onclick="closeDetailIfBg(event)">
+  <div class="modal">
+    <div class="modal-header" id="modal-header">
+      <div class="modal-header-bg" id="modal-header-bg"></div>
+      <div class="modal-header-content">
+        <div style="display:flex;align-items:flex-end;gap:14px">
+          <div class="modal-biz-icon" id="modal-icon"></div>
+          <div>
+            <div class="modal-title" id="modal-title">Business</div>
+            <div class="modal-rating-line">
+              <div class="stars stars-sm" id="modal-stars"></div>
+              <span style="font-size:12px;color:rgba(255,255,255,0.85);font-weight:600" id="modal-rating-text"></span>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close" onclick="closeDetail()">✕</button>
+      </div>
+    </div>
+    <div class="modal-tabs">
+      <button class="modal-tab active" data-tab="info" onclick="switchModalTab('info')">Info</button>
+      <button class="modal-tab" id="modal-tab-deals" data-tab="deals" onclick="switchModalTab('deals')">Deals</button>
+      <button class="modal-tab" id="modal-tab-reviews" data-tab="reviews" onclick="switchModalTab('reviews')">Reviews</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tab-panel active" id="tab-info">
+        <div class="detail-actions">
+          <button class="btn btn-secondary btn-sm" id="modal-fav-btn" onclick="toggleFavFromModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Save</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareCurrentBusiness()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98"/><path d="M15.41 6.51 8.59 10.49"/></svg> Share</button>
+          <button class="btn btn-primary btn-sm" onclick="openReviewFromModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Write Review</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="modal-badges"></div>
+        <p class="detail-desc" id="modal-desc"></p>
+        <div class="info-grid" id="modal-info-grid"></div>
+        <div class="rating-bars" id="modal-rating-bars" style="display:none">
+          <div class="rating-bars-title">Rating Breakdown</div>
+          <div id="modal-rating-bars-content"></div>
+        </div>
+      </div>
+      <div class="modal-tab-panel" id="tab-deals">
+        <div id="modal-deals-content"></div>
+      </div>
+      <div class="modal-tab-panel" id="tab-reviews">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+          <div style="font-size:15px;font-weight:800">Community Reviews</div>
+          <button class="btn btn-primary btn-sm" onclick="openReviewFromModal()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Review</button>
+        </div>
+        <div id="modal-reviews-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-overlay" id="review-modal" onclick="closeReviewIfBg(event)">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header" style="background:linear-gradient(135deg,#D62828,#9c1f1f);height:80px">
+      <div class="modal-header-content" style="padding-bottom:14px">
+        <div>
+          <div class="modal-title" style="font-size:17px">Share Your Experience</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:2px" id="review-biz-name">Business Name</div>
+        </div>
+        <button class="modal-close" onclick="closeReview()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="progress-bar"><div class="progress-fill" id="review-progress" style="width:50%"></div></div>
+      <div class="review-step active" id="review-step-1">
+        <div class="form-group">
+          <label class="form-label">Your Name (optional)</label>
+          <input type="text" id="review-author" placeholder="e.g. Sarah M."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Rating</label>
+          <div class="stars-picker" id="stars-picker">
+            <span class="star filled" data-val="1">★</span>
+            <span class="star filled" data-val="2">★</span>
+            <span class="star filled" data-val="3">★</span>
+            <span class="star filled" data-val="4">★</span>
+            <span class="star filled" data-val="5">★</span>
+          </div>
+          <div class="rating-label-text" id="rating-label-text">Excellent!</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Review</label>
+          <textarea id="review-text" rows="3" placeholder="What did you love? What could be better?"></textarea>
+        </div>
+        <div class="review-honeypot" aria-hidden="true">
+          <label for="review-website">Website</label>
+          <input type="text" id="review-website" tabindex="-1" autocomplete="off"/>
+          <label for="review-company">Company</label>
+          <input type="text" id="review-company" tabindex="-1" autocomplete="off"/>
+          <label for="review-phone">Phone</label>
+          <input type="tel" id="review-phone" tabindex="-1" autocomplete="off"/>
+          <input type="hidden" id="review-token"/>
+        </div>
+        <button class="btn btn-primary w-full" onclick="goToStep2()">Continue →</button>
+      </div>
+      <div class="review-step" id="review-step-2">
+        <div class="review-preview" id="review-preview">
+          <div class="review-preview-label">Preview</div>
+          <div class="stars stars-sm" id="preview-stars"></div>
+          <div class="review-preview-text" id="preview-text"></div>
+        </div>
+        <div class="captcha-box">
+          <div class="captcha-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#166534" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Human Verification</div>
+          <div class="captcha-sub">Solve this math problem to submit your review. We also check for spam-like activity.</div>
+          <div class="captcha-equation">
+            <div class="captcha-q" id="captcha-q">3 + 4 =</div>
+            <input type="number" class="captcha-input" id="captcha-ans" placeholder="?" oninput="clearCaptchaError()"/>
+          </div>
+          <div class="captcha-trust-note">This form uses a hidden honeypot, timing checks, duplicate detection, and rate limits.</div>
+          <div class="captcha-error hidden" id="captcha-error">Incorrect — try again!</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-ghost" style="flex:1" onclick="goToStep1()">← Back</button>
+          <button class="btn btn-primary" style="flex:2" onclick="submitReview()">Submit Review</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">✓ <span id="toast-msg">Done!</span></div>
+
+<!-- CHAT FAB -->
+<button id="chat-fab" class="hidden" onclick="toggleChat()" title="Ask the local business helper">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  <span class="notif-dot" id="chat-notif"></span>
+</button>
+
+<!-- CHAT WINDOW -->
+<div id="chat-window" style="position:relative">
+  <!-- Chat UI -->
+  <div id="chat-header">
+    <div class="chat-avatar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <div style="flex:1">
+      <div class="chat-header-title">Local Business Helper</div>
+      <div class="chat-header-sub" id="chat-header-sub">Quick answers about the directory</div>
+    </div>
+    <button id="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div id="chat-messages"></div>
+  <div class="chat-suggestions" id="chat-suggestions">
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Best rated places?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Black-owned businesses?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Any food deals?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Open late tonight?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Minority-owned businesses?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Best restaurants?</button>
+    <button class="chat-suggestion" onclick="sendSuggestion(this)">Add my business?</button>
+  </div>
+  <div id="chat-input-row">
+    <input type="text" id="chat-input" placeholder="Ask about local businesses…" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button id="chat-send" onclick="sendChat()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- SIGN UP MODAL -->
+<div class="util-overlay" id="signup-overlay" onclick="closeSignupModal()">
+  <div class="util-modal" onclick="event.stopPropagation()">
+    <div class="util-modal-header" style="background:linear-gradient(135deg,#D62828,#003049)">
+      <div class="util-modal-title">Create Your Account</div>
+      <div class="util-modal-sub">Join the Hometown Hub community</div>
+    </div>
+    <div class="util-modal-body">
+      <div class="util-field"><label class="util-label">Full Name</label><input type="text" class="util-input" placeholder="Jane Smith"/></div>
+      <div class="util-field"><label class="util-label">Email Address</label><input type="email" class="util-input" placeholder="jane@email.com"/></div>
+      <div class="util-field">
+        <label class="util-label">Password</label>
+        <input type="password" id="signup-password" class="util-input" placeholder="Create a strong password" oninput="updatePasswordRequirements()"/>
+        <div class="password-requirements" aria-live="polite">
+          <div class="password-req" id="req-length">More than 8 characters</div>
+          <div class="password-req" id="req-symbol">At least 1 symbol</div>
+          <div class="password-req" id="req-number">At least 1 number</div>
+          <div class="password-req" id="req-capital">At least 1 capital letter</div>
+        </div>
+      </div>
+      <div class="util-field"><label class="util-label">Confirm Password</label><input type="password" id="signup-confirm" class="util-input" placeholder="Repeat your password" oninput="updatePasswordRequirements()"/></div>
+      <div class="signup-error hidden" id="signup-error"></div>
+      <div style="display:flex;align-items:flex-start;gap:10px;margin:12px 0;font-size:13px;color:var(--text2)">
+        <input type="checkbox" id="signup-terms" style="margin-top:3px;flex-shrink:0"/>
+        <label for="signup-terms">I agree to the <span style="color:var(--accent);cursor:pointer">Terms of Service</span> and <span style="color:var(--accent);cursor:pointer">Privacy Policy</span></label>
+      </div>
+      <button class="util-btn-primary" onclick="createAccount()">Create Account</button>
+      <button class="util-btn-secondary" onclick="closeSignupModal()">Already have an account? Sign In</button>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER BUSINESS MODAL -->
+<div class="util-overlay" id="business-overlay" onclick="closeRegisterBusinessModal()">
+  <div class="util-modal" onclick="event.stopPropagation()">
+    <div class="util-modal-header" style="background:linear-gradient(135deg,#003049,#F77F00)">
+      <div class="util-modal-title">Register Your Small Business</div>
+      <div class="util-modal-sub">Add your listing to the Hometown Hub directory</div>
+    </div>
+    <div class="util-modal-body">
+      <div class="grid-2">
+        <div class="util-field"><label class="util-label">Business Name</label><input type="text" id="biz-form-name" class="util-input" placeholder="Main Street Cafe"/></div>
+        <div class="util-field"><label class="util-label">Category</label><select id="biz-form-cat" class="util-input"></select></div>
+      </div>
+      <div class="util-field"><label class="util-label">Short Description</label><textarea id="biz-form-desc" class="util-input" rows="3" placeholder="What do you offer?"></textarea></div>
+      <div class="grid-2">
+        <div class="util-field"><label class="util-label">Address</label><input type="text" id="biz-form-addr" class="util-input" placeholder="123 Main St"/></div>
+        <div class="util-field"><label class="util-label">Phone</label><input type="tel" id="biz-form-phone" class="util-input" placeholder="(732) 555-0000"/></div>
+      </div>
+      <div class="grid-2">
+        <div class="util-field"><label class="util-label">Hours</label><input type="text" id="biz-form-hours" class="util-input" placeholder="Mon-Fri 9AM-5PM"/></div>
+        <div class="util-field"><label class="util-label">Website</label><input type="text" id="biz-form-site" class="util-input" placeholder="yourbusiness.com"/></div>
+      </div>
+      <div class="grid-2">
+        <div class="util-field"><label class="util-label">Ownership</label>
+          <select id="biz-form-owned" class="util-input">
+            <option value="">No special badge</option>
+            <option value="black">Black-owned</option>
+            <option value="minority">Minority-owned</option>
+          </select>
+        </div>
+        <div class="util-field"><label class="util-label">Optional Deal</label><input type="text" id="biz-form-deal" class="util-input" placeholder="10% off first visit"/></div>
+      </div>
+      <div class="signup-error hidden" id="business-error"></div>
+      <button class="util-btn-primary" onclick="registerBusiness()">Add to Directory</button>
+      <button class="util-btn-secondary" onclick="closeRegisterBusinessModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW TO USE MODAL -->
+<div class="util-overlay" id="howto-overlay" onclick="closeHowToModal()">
+  <div class="util-modal" onclick="event.stopPropagation()">
+    <div class="util-modal-header" style="background:linear-gradient(135deg,#F77F00,#003049)">
+      <div class="util-modal-title">How to Use Hometown Hub</div>
+      <div class="util-modal-sub">Your guide to discovering local businesses</div>
+    </div>
+    <div class="util-modal-body">
+      <div class="howto-step"><div class="howto-num">1</div><div><div class="howto-title">Explore the Map</div><div class="howto-desc">Click the <strong>Map</strong> tab to see all businesses on an interactive map. Click any pin for a summary and deals. Use category chips to filter.</div></div></div>
+      <div class="howto-step"><div class="howto-num">2</div><div><div class="howto-title">Browse the Directory</div><div class="howto-desc">Click <strong>Directory</strong> to see all businesses as cards. Search by name or filter by category in the sidebar. Sort by rating, reviews, or active deals.</div></div></div>
+      <div class="howto-step"><div class="howto-num">3</div><div><div class="howto-title">Save Your Favorites</div><div class="howto-desc">Click the <strong>heart icon</strong> on any card to save it. View all saved businesses under <strong>Saved</strong>.</div></div></div>
+      <div class="howto-step"><div class="howto-num">4</div><div><div class="howto-title">View Business Details</div><div class="howto-desc">Click any card or map pin to see the full detail page — info, active deals, reviews, and star ratings.</div></div></div>
+      <div class="howto-step"><div class="howto-num">5</div><div><div class="howto-title">Support Local &amp; Minority-Owned</div><div class="howto-desc">Filter by <strong>Black-Owned</strong> or <strong>Minority-Owned</strong> categories to specifically discover and support these businesses.</div></div></div>
+      <div class="howto-step"><div class="howto-num">6</div><div><div class="howto-title">Chat with the Helper</div><div class="howto-desc">Click the <strong>chat bubble</strong> in the bottom-right for quick answers about categories, deals, hours, and featured local businesses.</div></div></div>
+      <button class="util-btn-primary" onclick="closeHowToModal()" style="margin-top:8px">Got it, let's explore!</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCESSIBILITY MODAL -->
+<div class="util-overlay" id="access-overlay" onclick="closeAccessModal()">
+  <div class="util-modal" onclick="event.stopPropagation()">
+    <div class="util-modal-header" style="background:linear-gradient(135deg,#D62828,#F77F00)">
+      <div class="util-modal-title">Accessibility Options</div>
+      <div class="util-modal-sub">Customize your experience</div>
+    </div>
+    <div class="util-modal-body">
+      <div class="access-row">
+        <div class="access-icon-wrap" style="background:#fdeceb"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D62828" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></div>
+        <div style="flex:1"><div class="access-title">Text Size</div><div class="access-desc">Adjust the size of text throughout the app</div></div>
+        <div class="access-controls">
+          <button class="access-ctrl-btn" id="access-text-small" onclick="setTextSize('small')" aria-label="Use smaller text">A-</button>
+          <button class="access-ctrl-btn access-ctrl-active" id="access-text-normal" onclick="setTextSize('normal')" aria-label="Use normal text">A</button>
+          <button class="access-ctrl-btn" id="access-text-large" onclick="setTextSize('large')" aria-label="Use larger text">A+</button>
+        </div>
+      </div>
+      <div class="access-row">
+        <div class="access-icon-wrap" style="background:#eef2ff"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#386075" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V5h16v2"/><path d="M9 20h6"/><path d="M12 5v15"/></svg></div>
+        <div style="flex:1"><div class="access-title">Dyslexia-Friendly Font</div><div class="access-desc">Use Dyslexie if installed, with readable fallbacks</div></div>
+        <div class="access-toggle-wrap"><label class="access-toggle"><input type="checkbox" id="access-dyslexia" onchange="setDyslexiaFont(this.checked)" aria-label="Toggle dyslexia-friendly font"/><span class="access-toggle-slider"></span></label></div>
+      </div>
+      <div class="access-row">
+        <div class="access-icon-wrap" style="background:#fff1e0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F77F00" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></div>
+        <div style="flex:1"><div class="access-title">High Contrast Mode</div><div class="access-desc">Increase contrast for better readability</div></div>
+        <div class="access-toggle-wrap"><label class="access-toggle"><input type="checkbox" id="access-contrast" onchange="setHighContrast(this.checked)" aria-label="Toggle high contrast mode"/><span class="access-toggle-slider"></span></label></div>
+      </div>
+      <div class="access-row">
+        <div class="access-icon-wrap" style="background:#f0fdf4"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <div style="flex:1"><div class="access-title">Reduce Motion</div><div class="access-desc">Minimize animations and transitions</div></div>
+        <div class="access-toggle-wrap"><label class="access-toggle"><input type="checkbox" id="access-motion" onchange="setReduceMotion(this.checked)" aria-label="Toggle reduced motion"/><span class="access-toggle-slider"></span></label></div>
+      </div>
+      <div class="access-row">
+        <div class="access-icon-wrap" style="background:#fff8ea"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FCBF49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
+        <div style="flex:1"><div class="access-title">Screen Reader Support</div><div class="access-desc">Optimized ARIA labels and keyboard navigation</div></div>
+        <div class="access-toggle-wrap"><label class="access-toggle"><input type="checkbox" id="access-screen-reader" onchange="setScreenReaderSupport(this.checked)" checked aria-label="Toggle screen reader support"/><span class="access-toggle-slider"></span></label></div>
+      </div>
+      <button class="util-btn-primary" onclick="closeAccessModal()" style="margin-top:8px">Save Preferences</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════
+const CATEGORIES = {
+  food:          { label:'Food & Dining',    icon:'food',         color:'#9c0606' },
+  retail:        { label:'Retail',           icon:'retail',       color:'#d62828' },
+  services:      { label:'Services',         icon:'services',     color:'#cc5a5a' },
+  health:        { label:'Health & Medical', icon:'health',       color:'#d68787' },
+  fitness:       { label:'Fitness',          icon:'fitness',      color:'#f2c7c7' },
+  beauty:        { label:'Beauty & Spa',     icon:'beauty',       color:'#6e3c08' },
+  automotive:    { label:'Automotive',       icon:'automotive',   color:'#b3610b' },
+  education:     { label:'Education',        icon:'education',    color:'#f77f00' },
+  entertainment: { label:'Entertainment',    icon:'entertainment',color:'#eba257' },
+  pets:          { label:'Pet Care',         icon:'pets',         color:'#e3bd91' },
+  home:          { label:'Home & Garden',    icon:'home',         color:'#996603' },
+  tech:          { label:'Electronics',      icon:'tech',         color:'#fad07f' },
+  clothing:      { label:'Apparel',          icon:'clothing',     color:'#e8bb64' },
+  grocery:       { label:'Grocery',          icon:'grocery',      color:'#ffe3b0' },
+  nightlife:     { label:'Nightlife',        icon:'nightlife',    color:'#003049' },
+  professional:  { label:'Professional',     icon:'professional', color:'#386075' },
+  blackowned:    { label:'Black-Owned',      icon:'blackowned',   color:'#91a6b3' },
+  minorityowned: { label:'Minority-Owned',   icon:'minorityowned',color:'#cce2ed' },
+};
+
+const BUSINESSES = [
+  { id:1,  name:"Joe's Artisan Bakery",  cat:'food',          desc:"Fresh sourdough, pastries, and custom cakes baked daily. Family-owned for 25 years.", deals:["Buy 1 Get 1 Free Croissants before 10 AM","Free coffee with any pastry order over $8"], lat:40.5187, lng:-74.4121, addr:"101 Main St",          phone:"(732) 555-0101", hours:"Mon-Sat 6AM-6PM",  site:"joesbakerynj.com",     verified:true,  trending:true, owned:'black' },
+  { id:2,  name:"FixIt Hardware",         cat:'retail',        desc:"Local independent stop for tools, hardware and home improvement supplies.",             deals:[],                                                                                    lat:40.5287, lng:-74.4021, addr:"405 Industrial Way", phone:"(732) 555-0102", hours:"Mon-Sat 7AM-8PM",  site:"fixithardware.com",    verified:true,  trending:false, owned:'' },
+  { id:3,  name:"Sparkle Cleaners",       cat:'services',      desc:"Eco-friendly dry cleaning and expert tailoring since 2001.",                            deals:["20% off first wash","Free pickup & delivery on orders $40+"],                     lat:40.5087, lng:-74.4221, addr:"220 Central Ave",    phone:"(732) 555-0103", hours:"Daily 8AM-7PM",    site:"",                     verified:false, trending:false, owned:'' },
+  { id:4,  name:"Edison Family Care",     cat:'health',        desc:"Comprehensive primary care clinic with same-day appointments. Walk-ins welcome.",       deals:["Free wellness check for new patients"],                                           lat:40.5050, lng:-74.4150, addr:"10 Health Blvd",     phone:"(732) 555-0110", hours:"Mon-Fri 8AM-6PM",  site:"edisonfamilycare.org", verified:true,  trending:false, owned:'' },
+  { id:5,  name:"Iron Core Gym",          cat:'fitness',       desc:"State-of-the-art facility featuring free weights, cardio, and group classes.",          deals:["No initiation fee this month","First week free for new members"],                lat:40.5110, lng:-74.4300, addr:"75 Fitness Dr",      phone:"(732) 555-0109", hours:"Daily 5AM-11PM",   site:"ironcoregym.com",      verified:true,  trending:true, owned:'' },
+  { id:6,  name:"Glow Up Beauty",         cat:'beauty',        desc:"Premium skincare treatments and organic beauty products curated by experts.",           deals:[],                                                                                    lat:40.5160, lng:-74.4100, addr:"15 Beauty Lane",     phone:"(732) 555-0105", hours:"Tue-Sun 9AM-8PM",  site:"glowupbeauty.com",     verified:true,  trending:false, owned:'black' },
+  { id:7,  name:"AutoElite Repairs",      cat:'automotive',    desc:"Honest, reliable auto mechanic services. No hidden fees, guaranteed.",                 deals:["$20 off full synthetic oil change","Free tire rotation with any service"],         lat:40.5350, lng:-74.4250, addr:"500 Motor Pkwy",     phone:"(732) 555-0107", hours:"Mon-Fri 7AM-6PM",  site:"",                     verified:false, trending:false, owned:'' },
+  { id:8,  name:"Brainiac Tutoring",      cat:'education',     desc:"K-12 and college-level tutoring in all subjects. Certified teachers on staff.",        deals:["First assessment session free"],                                                  lat:40.5220, lng:-74.4080, addr:"200 Academic Way",   phone:"(732) 555-0108", hours:"Mon-Sun 10AM-8PM", site:"brainiac.edu",         verified:true,  trending:false, owned:'minority' },
+  { id:9,  name:"Starlight Cinema",       cat:'entertainment', desc:"Independent movie theater showing indie, foreign, and classic films weekly.",           deals:["$7 Ticket Tuesdays","Buy 2 get 1 free on all concessions"],                      lat:40.5270, lng:-74.4120, addr:"44 Cinema Center",   phone:"(732) 555-0111", hours:"Daily 12PM-11PM",  site:"starlightcinema.com",  verified:true,  trending:true, owned:'' },
+  { id:10, name:"Happy Paws Clinic",      cat:'pets',          desc:"Full-service veterinary clinic, grooming salon, and pet boarding.",                    deals:["Free nail trim with grooming session"],                                           lat:40.5090, lng:-74.4090, addr:"77 Pet Place",       phone:"(732) 555-0115", hours:"Mon-Sat 8AM-6PM",  site:"happypaws.vet",        verified:true,  trending:false, owned:'' },
+  { id:11, name:"Hearth & Haven",         cat:'home',          desc:"Curated furniture and home decor with a focus on sustainable materials.",              deals:[],                                                                                    lat:40.5130, lng:-74.4280, addr:"250 Decor Ave",      phone:"(732) 555-0114", hours:"Tue-Sun 10AM-7PM", site:"hearthandhaven.com",   verified:false, trending:false, owned:'' },
+  { id:12, name:"Gizmo Galaxy",           cat:'tech',          desc:"Hub for electronics, smart home devices, repairs, and tech support.",                  deals:["10% off phone screen repairs","Free diagnostics on all devices"],                 lat:40.5240, lng:-74.4200, addr:"99 Tech Park",       phone:"(732) 555-0113", hours:"Mon-Sat 10AM-8PM", site:"gizmogalaxy.tech",     verified:true,  trending:true, owned:'minority' },
+  { id:13, name:"Thread & Trend",         cat:'clothing',      desc:"Boutique offering contemporary fashion and pieces from local designers.",              deals:["End of Season Sale: Up to 50% Off"],                                              lat:40.5200, lng:-74.4150, addr:"33 Fashion Blvd",    phone:"(732) 555-0104", hours:"Mon-Sun 11AM-8PM", site:"threadandtrend.com",   verified:true,  trending:false, owned:'' },
+  { id:14, name:"Fresh Pick Market",      cat:'grocery',       desc:"Local farmers market and organic grocery with fresh produce daily.",                   deals:[],                                                                                    lat:40.5190, lng:-74.4050, addr:"110 Market Sq",      phone:"(732) 555-0112", hours:"Daily 7AM-9PM",    site:"freshpickmarket.com",  verified:true,  trending:false, owned:'minority' },
+  { id:15, name:"The Velvet Lounge",      cat:'nightlife',     desc:"Jazz club and speakeasy with live music Fri-Sat and craft cocktails nightly.",         deals:["Half-price appetizers before 7 PM","Free cover on Wednesdays"],                  lat:40.5150, lng:-74.4110, addr:"88 Nightlife Alley", phone:"(732) 555-0116", hours:"Wed-Sun 5PM-2AM",  site:"velvetlounge.bar",     verified:true,  trending:true, owned:'black' },
+  { id:16, name:"Apex Legal Partners",    cat:'professional',  desc:"Law firm specializing in small business needs, contracts, and IP protection.",         deals:["Free 30-minute initial consultation"],                                            lat:40.5210, lng:-74.4010, addr:"100 Corporate Plaza",phone:"(732) 555-0117", hours:"Mon-Fri 9AM-5PM",  site:"apexlegal.com",        verified:true,  trending:false, owned:'' },
+  { id:17, name:"Sunrise Dim Sum",          cat:'food',          desc:"Authentic Cantonese dim sum with handmade dumplings and traditional Hong Kong-style tea.",   deals:["Weekend brunch combo $12.99"],                                                    lat:40.5170, lng:-74.4065, addr:"22 Harbor Rd",        phone:"(732) 555-0201", hours:"Daily 8AM-3PM",    site:"sunrisedimsum.com",    verified:true,  trending:true, owned:'minority' },
+  { id:18, name:"Piccolo Trattoria",         cat:'food',          desc:"Family-run Italian kitchen serving wood-fired pizza and homemade pasta from scratch.",       deals:["15% off Monday-Wednesday","Free tiramisu with $50+ orders"],                     lat:40.5220, lng:-74.4175, addr:"77 Vine St",           phone:"(732) 555-0202", hours:"Tue-Sun 11AM-10PM", site:"piccolotrattoria.com", verified:true,  trending:false, owned:'minority' },
+  { id:19, name:"Taco Roots",               cat:'food',          desc:"Street-style tacos and burritos made with locally sourced ingredients and house salsas.",    deals:["Taco Tuesday: 3 for $6"],                                                         lat:40.5140, lng:-74.4310, addr:"5 Elm Ave",            phone:"(732) 555-0203", hours:"Mon-Sun 10AM-9PM",  site:"tacoroots.co",         verified:false, trending:true, owned:'black' },
+  { id:20, name:"Paper & Pine",             cat:'retail',        desc:"Indie bookshop and stationery store featuring local authors, zines, and art supplies.",     deals:["Buy 2 books get 1 free"],                                                         lat:40.5255, lng:-74.4055, addr:"12 Maple Ave",         phone:"(732) 555-0204", hours:"Mon-Sat 9AM-8PM",   site:"paperandpine.com",     verified:true,  trending:true, owned:'' },
+  { id:21, name:"The Gift Collective",      cat:'retail',        desc:"Curated gifts, candles, artisan goods, and locally made products perfect for any occasion.", deals:["10% off all purchases over $30"],                                                 lat:40.5305, lng:-74.4035, addr:"300 Commerce Blvd",    phone:"(732) 555-0205", hours:"Tue-Sun 10AM-7PM",  site:"giftcollective.shop",  verified:false, trending:false, owned:'' },
+  { id:22, name:"Vinyl Kingdom",            cat:'retail',        desc:"Record shop with 10,000+ titles spanning jazz, soul, rock, and rare imports.",               deals:["$1 bin every Saturday"],                                                          lat:40.5275, lng:-74.4068, addr:"44 Record Row",        phone:"(732) 555-0206", hours:"Wed-Mon 11AM-7PM",  site:"vinylkingdom.com",     verified:true,  trending:true, owned:'black' },
+  { id:23, name:"Bright Clean Co.",         cat:'services',      desc:"Residential and commercial cleaning services with same-week booking available.",            deals:["First home clean 25% off"],                                                       lat:40.5065, lng:-74.4195, addr:"89 Service Lane",      phone:"(732) 555-0207", hours:"Mon-Sat 7AM-6PM",   site:"brightclean.co",       verified:true,  trending:false, owned:'' },
+  { id:24, name:"Sharp Edge Barbers",       cat:'services',      desc:"Classic barbershop offering cuts, shaves, and beard styling. Walk-ins always welcome.",     deals:["Free hot towel shave with any haircut"],                                          lat:40.5102, lng:-74.4240, addr:"34 Barber Way",        phone:"(732) 555-0208", hours:"Tue-Sun 9AM-7PM",   site:"sharpedgebarbers.com", verified:true,  trending:true, owned:'black' },
+  { id:25, name:"Quick Print Studio",       cat:'services',      desc:"Full-service print shop for business cards, banners, flyers, and custom merchandise.",      deals:["500 business cards for $19","Same-day printing available"],                       lat:40.5075, lng:-74.4260, addr:"101 Print Plaza",      phone:"(732) 555-0209", hours:"Mon-Fri 8AM-7PM",   site:"quickprintstudio.com", verified:false, trending:false, owned:'' },
+  { id:26, name:"Serenity Wellness Clinic", cat:'health',        desc:"Integrative health center offering acupuncture, massage therapy, and nutritional counseling.",deals:["Free 20-min consultation","10% off first 3 sessions"],                           lat:40.5030, lng:-74.4130, addr:"40 Healing Ave",       phone:"(732) 555-0210", hours:"Mon-Sat 9AM-7PM",   site:"serenitywellness.com", verified:true,  trending:true, owned:'black' },
+  { id:27, name:"SmileMore Dental",         cat:'health',        desc:"General and cosmetic dentistry practice with flexible scheduling and payment plans.",        deals:["Free new patient exam & X-rays"],                                                 lat:40.5065, lng:-74.4168, addr:"250 Dental Dr",        phone:"(732) 555-0211", hours:"Mon-Thu 8AM-5PM",   site:"smilemoredentalco.com",verified:true,  trending:false, owned:'' },
+  { id:28, name:"ClearView Optometry",      cat:'health',        desc:"Complete eye care: exams, glasses fittings, contact lens consultations, and more.",         deals:["$50 off designer frames with exam"],                                              lat:40.5042, lng:-74.4185, addr:"7 Vision Ct",          phone:"(732) 555-0212", hours:"Mon-Fri 9AM-6PM",   site:"clearviewoptometry.com",verified:false,trending:false, owned:'' },
+  { id:29, name:"Zen Yoga Studio",          cat:'fitness',       desc:"Hot yoga, vinyasa, and restorative classes taught by certified instructors in a calm space.",deals:["First class free","Monthly unlimited $65"],                                       lat:40.5125, lng:-74.4322, addr:"18 Lotus Lane",        phone:"(732) 555-0213", hours:"Daily 6AM-9PM",     site:"zenyogastudio.com",    verified:true,  trending:true, owned:'minority' },
+  { id:30, name:"CrossPeak Athletics",      cat:'fitness',       desc:"CrossFit and HIIT training facility with certified coaches and community competitions.",     deals:["Free foundations class","Refer a friend, both get 20% off"],                     lat:40.5098, lng:-74.4315, addr:"90 Peak Rd",           phone:"(732) 555-0214", hours:"Daily 5AM-10PM",    site:"crosspeakathletics.com",verified:true, trending:false, owned:'' },
+  { id:31, name:"Splash Aquatic Center",    cat:'fitness',       desc:"Indoor swimming pool with lap swim hours, swim lessons for all ages, and water aerobics.",   deals:["Free trial swim lesson for kids"],                                                lat:40.5115, lng:-74.4285, addr:"55 Aqua Blvd",         phone:"(732) 555-0215", hours:"Mon-Sun 6AM-9PM",   site:"splashaquatic.com",    verified:false, trending:false, owned:'' },
+  { id:32, name:"Chrome Nail Bar",          cat:'beauty',        desc:"Luxury nail salon specializing in gel, acrylic, chrome finishes, and nail art.",            deals:["20% off first visit","Buy 3 manicures get 1 free"],                               lat:40.5155, lng:-74.4085, addr:"61 Style St",          phone:"(732) 555-0216", hours:"Tue-Sun 10AM-8PM",  site:"chromenailbar.com",    verified:true,  trending:true, owned:'black' },
+  { id:33, name:"Luxe Hair Studio",         cat:'beauty',        desc:"Full-service hair salon for cuts, color, keratin treatments, and bridal styling.",           deals:["Free gloss treatment with color service"],                                        lat:40.5168, lng:-74.4118, addr:"130 Beauty Blvd",      phone:"(732) 555-0217", hours:"Mon-Sat 9AM-7PM",   site:"luxehairstudio.com",   verified:true,  trending:false, owned:'' },
+  { id:34, name:"The Brow Bar",             cat:'beauty',        desc:"Eyebrow threading, tinting, lamination, and lash lift specialist studio.",                  deals:["First threading $10 flat"],                                                       lat:40.5145, lng:-74.4095, addr:"22 Brow Lane",         phone:"(732) 555-0218", hours:"Tue-Sat 10AM-7PM",  site:"thebrowbar.co",        verified:false, trending:true, owned:'minority' },
+  { id:35, name:"Speedy Lube Express",      cat:'automotive',    desc:"Fast oil changes, fluid checks, and basic maintenance. In and out in 15 minutes.",          deals:["$10 off synthetic oil change","Free air filter check"],                           lat:40.5340, lng:-74.4230, addr:"200 Auto Row",         phone:"(732) 555-0219", hours:"Mon-Sat 7AM-7PM",   site:"speedylubeexpress.com",verified:true,  trending:false, owned:'' },
+  { id:36, name:"Auto Glass Pro",           cat:'automotive',    desc:"Windshield repair, replacement, and window tinting. Mobile service available.",             deals:["Free chip repair with replacement","$30 off full tint package"],                  lat:40.5365, lng:-74.4270, addr:"312 Motor Pkwy",       phone:"(732) 555-0220", hours:"Mon-Fri 8AM-5PM",   site:"autoglasspro.com",     verified:false, trending:false, owned:'' },
+  { id:37, name:"Tires & Beyond",           cat:'automotive',    desc:"Full tire sales, mounting, balancing, alignment, and seasonal changeover services.",        deals:["Free balancing with 4-tire purchase","Road hazard warranty included"],           lat:40.5355, lng:-74.4215, addr:"450 Motor Pkwy",       phone:"(732) 555-0221", hours:"Mon-Sat 8AM-6PM",   site:"tiresbeyond.com",      verified:true,  trending:true, owned:'' },
+  { id:38, name:"Little Minds Preschool",   cat:'education',     desc:"Play-based learning environment for ages 2-5. Small class sizes with certified educators.", deals:["Free trial week for new enrollments"],                                            lat:40.5230, lng:-74.4095, addr:"10 Learning Ln",       phone:"(732) 555-0222", hours:"Mon-Fri 7AM-6PM",   site:"littlemindsschool.com",verified:true,  trending:false, owned:'' },
+  { id:39, name:"Code Academy Jr.",         cat:'education',     desc:"After-school coding, robotics, and STEM workshops for kids ages 7-17.",                     deals:["First class free","Summer camp early-bird discount"],                             lat:40.5215, lng:-74.4060, addr:"88 STEM Drive",        phone:"(732) 555-0223", hours:"Mon-Fri 3PM-8PM",   site:"codeacademyjr.com",    verified:true,  trending:true, owned:'minority' },
+  { id:40, name:"Language Hub",             cat:'education',     desc:"Spanish, Mandarin, French, and ESL classes for children and adults in small groups.",       deals:["10% off 6-week enrollment"],                                                      lat:40.5205, lng:-74.4040, addr:"55 Language Ave",      phone:"(732) 555-0224", hours:"Mon-Sat 9AM-8PM",   site:"languagehub.edu",      verified:false, trending:false, owned:'minority' },
+  { id:41, name:"Laser Zone Arena",         cat:'entertainment', desc:"Laser tag, arcade games, and VR experiences for families and team events.",                 deals:["Kids under 5 play free","Group packages from $99"],                               lat:40.5260, lng:-74.4105, addr:"8 Fun Blvd",           phone:"(732) 555-0225", hours:"Daily 10AM-10PM",   site:"laserzonearena.com",   verified:true,  trending:true, owned:'' },
+  { id:42, name:"Escape the Room NJ",       cat:'entertainment', desc:"Immersive escape room experiences with 5 unique themed rooms for 2-10 players.",            deals:["$10 off weekday bookings","Student discount 15% off"],                            lat:40.5280, lng:-74.4135, addr:"99 Puzzle Way",        phone:"(732) 555-0226", hours:"Daily 12PM-11PM",   site:"escapetheroomnj.com",  verified:true,  trending:false, owned:'' },
+  { id:43, name:"Bowlero Lanes",            cat:'entertainment', desc:"Modern bowling alley with 24 lanes, sports bar, arcade, and private party rooms.",          deals:["Cosmic bowling Fri-Sat nights $8/game","Shoe rental included Mon-Thu"],           lat:40.5268, lng:-74.4115, addr:"200 Strike Ave",       phone:"(732) 555-0227", hours:"Mon-Sun 11AM-1AM",  site:"bowlerolanes.com",     verified:true,  trending:true, owned:'' },
+  { id:44, name:"Waggy Tails Grooming",     cat:'pets',          desc:"Dog and cat grooming studio with breed-specific styling and spa packages.",                  deals:["Free bandana with first groom","10% off for shelter adoptees"],                  lat:40.5080, lng:-74.4075, addr:"33 Paw Place",         phone:"(732) 555-0228", hours:"Tue-Sun 9AM-5PM",   site:"waggytailsgrooming.com",verified:true, trending:false, owned:'' },
+  { id:45, name:"Critter Corner Pet Shop",  cat:'pets',          desc:"Locally owned pet supply store with fish, small animals, bird supplies, and expert advice.", deals:["Loyalty card: 10th purchase free"],                                               lat:40.5070, lng:-74.4100, addr:"15 Pet Lane",          phone:"(732) 555-0229", hours:"Mon-Sat 9AM-7PM",   site:"crittercorner.com",    verified:false, trending:false, owned:'' },
+  { id:46, name:"Paws & Stay Boarding",     cat:'pets',          desc:"Overnight pet boarding, doggy daycare, and training sessions in a safe, caring environment.", deals:["First night boarding free","Daycare $25/day"],                                   lat:40.5095, lng:-74.4082, addr:"60 Kennel Rd",         phone:"(732) 555-0230", hours:"Daily 7AM-7PM",     site:"pawsandstay.com",      verified:true,  trending:true, owned:'' },
+  { id:47, name:"Green Thumb Nursery",      cat:'home',          desc:"Local plant nursery with seasonal flowers, herbs, trees, and expert landscaping advice.",   deals:["Free potting soil bag with plant purchase","Spring sale 30% off perennials"],   lat:40.5118, lng:-74.4265, addr:"80 Garden Way",        phone:"(732) 555-0231", hours:"Daily 8AM-6PM",     site:"greenthumnursery.com", verified:true,  trending:true, owned:'' },
+  { id:48, name:"Reliable Plumbing Co.",    cat:'home',          desc:"Licensed plumbers for repairs, installations, and emergency callouts 7 days a week.",       deals:["$50 off first service call","Free drain inspection"],                             lat:40.5122, lng:-74.4290, addr:"44 Pipeline Rd",       phone:"(732) 555-0232", hours:"Daily 7AM-8PM",     site:"reliableplumbing.com", verified:true,  trending:false, owned:'' },
+  { id:49, name:"Smart Home Solutions",     cat:'home',          desc:"Smart device installation: lighting, security cameras, thermostats, and full home automation.",deals:["Free smart bulb starter kit with $200+ install"],                               lat:40.5135, lng:-74.4272, addr:"120 Smart Ave",        phone:"(732) 555-0233", hours:"Mon-Sat 9AM-6PM",   site:"smarthomesolutions.co",verified:false, trending:true, owned:'' },
+  { id:50, name:"ByteWorks Repair",         cat:'tech',          desc:"Laptop, tablet, and desktop repair. Data recovery, virus removal, and custom PC builds.",   deals:["Free diagnostic for first-time customers","10% student discount"],               lat:40.5235, lng:-74.4188, addr:"14 Circuit Rd",        phone:"(732) 555-0234", hours:"Mon-Sat 9AM-7PM",   site:"byteworksrepair.com",  verified:true,  trending:false, owned:'' },
+  { id:51, name:"The Camera Shop",          cat:'tech',          desc:"Photography gear, drone accessories, professional printing, and camera repair services.",   deals:["Free sensor clean with any repair","10% off accessories with camera purchase"], lat:40.5245, lng:-74.4210, addr:"72 Lens Ave",          phone:"(732) 555-0235", hours:"Tue-Sat 10AM-6PM",  site:"thecamerashop.com",    verified:true,  trending:true, owned:'' },
+  { id:52, name:"Connect IT Solutions",     cat:'tech',          desc:"IT support for small businesses: networking, cloud setup, cybersecurity, and helpdesk.",    deals:["Free network audit ($150 value)","Remote support plans from $49/mo"],           lat:40.5250, lng:-74.4195, addr:"200 Tech Park",        phone:"(732) 555-0236", hours:"Mon-Fri 8AM-6PM",   site:"connectitsolutions.com",verified:true,trending:false, owned:'' },
+  { id:53, name:"Sole Society Sneakers",    cat:'clothing',      desc:"Sneaker boutique specializing in limited editions, classics, and custom sneaker cleaning.",  deals:["Free cleaning kit with any purchase","Raffle entries for limited drops"],        lat:40.5192, lng:-74.4138, addr:"55 Sneaker St",        phone:"(732) 555-0237", hours:"Mon-Sun 10AM-8PM",  site:"solesociety.com",      verified:true,  trending:true, owned:'' },
+  { id:54, name:"Vintage Vault",            cat:'clothing',      desc:"Curated vintage and secondhand clothing from the 70s-90s. New stock every Thursday.",       deals:["Mystery bag: 5 items for $20","Student 15% off with ID"],                        lat:40.5205, lng:-74.4162, addr:"88 Retro Row",         phone:"(732) 555-0238", hours:"Wed-Mon 11AM-7PM",  site:"vintagevault.shop",    verified:false, trending:true, owned:'' },
+  { id:55, name:"Active Threads",           cat:'clothing',      desc:"Athletic and activewear store with major brands and expert fit consultations.",              deals:["Running shoes trial program","15% off first purchase"],                           lat:40.5198, lng:-74.4145, addr:"12 Sport Blvd",        phone:"(732) 555-0239", hours:"Mon-Sat 9AM-8PM",   site:"activethreads.com",    verified:true,  trending:false, owned:'' },
+  { id:56, name:"The Butcher Block",        cat:'grocery',       desc:"Artisan butcher shop with dry-aged beef, house-made sausages, and specialty meats.",        deals:["Weekend BBQ bundle deal","Buy 2 lbs get 0.5 lb free on ground beef"],           lat:40.5185, lng:-74.4035, addr:"28 Market Sq",         phone:"(732) 555-0240", hours:"Tue-Sun 8AM-7PM",   site:"thebutcherblock.com",  verified:true,  trending:false, owned:'' },
+  { id:57, name:"Harvest Health Foods",     cat:'grocery',       desc:"Natural grocery focusing on organic, gluten-free, and specialty diet products.",            deals:["10% off bulk bins every Tuesday","New item samples every weekend"],               lat:40.5195, lng:-74.4062, addr:"75 Organic Way",       phone:"(732) 555-0241", hours:"Daily 8AM-9PM",     site:"harvesthealthfoods.com",verified:true, trending:true, owned:'minority' },
+  { id:58, name:"Lopez Family Bakery",      cat:'grocery',       desc:"Traditional Mexican bakery with pan dulce, tamales, fresh tortillas, and seasonal specials.", deals:["Half-price pan dulce after 5PM"],                                                 lat:40.5182, lng:-74.4048, addr:"3 Bakery Ln",           phone:"(732) 555-0242", hours:"Tue-Sun 6AM-7PM",   site:"lopezfamilybakery.com",verified:false, trending:false, owned:'minority' },
+  { id:59, name:"Craft Republic Bar",       cat:'nightlife',     desc:"Local craft beer bar with 30 rotating taps, pub quizzes, and live music on weekends.",      deals:["Happy hour Mon-Fri 4-7PM","Free pint on your birthday"],                          lat:40.5145, lng:-74.4098, addr:"10 Tap Row",           phone:"(732) 555-0243", hours:"Mon-Sun 3PM-2AM",   site:"craftrepublicbar.com", verified:true,  trending:true, owned:'black' },
+  { id:60, name:"Rooftop Social",           cat:'nightlife',     desc:"Rooftop bar with panoramic views, cocktails, and DJs every Friday and Saturday night.",     deals:["Free entry before 9PM on Fridays","Bottomless brunch Sundays $35"],              lat:40.5158, lng:-74.4105, addr:"5 Skyline Ave",         phone:"(732) 555-0244", hours:"Wed-Sun 5PM-2AM",   site:"rooftopsocial.com",    verified:true,  trending:true, owned:'' },
+  { id:61, name:"The Laugh Factory",        cat:'nightlife',     desc:"Comedy club featuring local and touring stand-up comedians every Thursday through Sunday.",  deals:["2-for-1 tickets Thursdays","$5 cover with college ID"],                           lat:40.5140, lng:-74.4118, addr:"44 Comedy Lane",       phone:"(732) 555-0245", hours:"Thu-Sun 7PM-1AM",   site:"thelaughfactory.com",  verified:false, trending:false, owned:'' },
+  { id:62, name:"Horizon Accounting",       cat:'professional',  desc:"Certified public accountants specializing in small business taxes, bookkeeping, and audits.", deals:["Free 30-min tax planning session"],                                               lat:40.5218, lng:-74.4025, addr:"88 Finance Way",       phone:"(732) 555-0246", hours:"Mon-Fri 9AM-6PM",   site:"horizonaccounting.com",verified:true,  trending:false, owned:'black' },
+  { id:63, name:"BrandFirst Marketing",     cat:'professional',  desc:"Digital marketing agency for local businesses: SEO, social media, ads, and branding.",      deals:["Free website audit","First month social media management 50% off"],              lat:40.5215, lng:-74.4018, addr:"150 Business Plaza",   phone:"(732) 555-0247", hours:"Mon-Fri 9AM-5PM",   site:"brandfirstmarketing.com",verified:true,trending:true, owned:'minority' },
+  { id:64, name:"Main Street Insurance",    cat:'professional',  desc:"Independent insurance broker for home, auto, life, and small business liability policies.", deals:["Free policy review","Bundling discount up to 20%"],                               lat:40.5208, lng:-74.4005, addr:"200 Coverage Ct",      phone:"(732) 555-0248", hours:"Mon-Fri 8:30AM-5PM",site:"mainstreetins.com",    verified:true,  trending:false, owned:'' },
+  { id:65, name:"Crown & Glory Salon",        cat:'blackowned',    owned:'black',   desc:"Full-service Black hair care salon specializing in natural styles, braids, locs, and protective styles.", deals:["Free consultation for new clients","20% off protective styles in March"],           lat:40.5178, lng:-74.4132, addr:"12 Crown Ave",         phone:"(732) 555-0301", hours:"Tue-Sat 9AM-7PM",   site:"crownandglorysalon.com",  verified:true,  trending:true  },
+  { id:66, name:"Soulful Kitchen",            cat:'blackowned',    owned:'black',   desc:"Southern comfort food restaurant serving fried chicken, mac & cheese, collard greens, and sweet potato pie.", deals:["Sunday family meal deal — feeds 4 for $35","Free dessert on birthdays"],          lat:40.5162, lng:-74.4088, addr:"88 Soul Food Way",      phone:"(732) 555-0302", hours:"Wed-Mon 11AM-9PM",  site:"soulfulkitchen.com",      verified:true,  trending:true  },
+  { id:67, name:"Legacy Books & Culture",     cat:'blackowned',    owned:'black',   desc:"Independent bookstore focused on Black literature, history, and culture. Community events and readings weekly.", deals:["Buy 2 get 1 free on all titles","Free book club membership"],                    lat:40.5258, lng:-74.4062, addr:"55 Legacy Lane",        phone:"(732) 555-0303", hours:"Mon-Sat 10AM-7PM",  site:"legacybooksandculture.com",verified:true, trending:false },
+  { id:68, name:"Golden Spice Kitchen",       cat:'minorityowned', owned:'minority',desc:"Family-run South Asian restaurant serving authentic curries, biryanis, tandoori dishes, and fresh naan.", deals:["Lunch buffet $13.99 Mon-Fri","10% off online orders"],                             lat:40.5172, lng:-74.4142, addr:"40 Spice Rd",           phone:"(732) 555-0304", hours:"Daily 11AM-10PM",   site:"goldenspicekitchen.com",  verified:true,  trending:true  },
+  { id:69, name:"Lotus Wellness & Acupuncture",cat:'minorityowned',owned:'minority',desc:"Traditional Chinese medicine, acupuncture, herbal consultations, and cupping therapy by licensed practitioners.", deals:["First session 30% off","Package of 5 sessions save $60"],                     lat:40.5038, lng:-74.4122, addr:"18 Wellness Ct",        phone:"(732) 555-0305", hours:"Mon-Sat 9AM-6PM",   site:"lotuswellnessnj.com",     verified:true,  trending:false },
+  { id:70, name:"Casa Flores Boutique",        cat:'minorityowned', owned:'minority',desc:"Latina-owned clothing boutique featuring handcrafted jewelry, embroidered textiles, and artisan pieces.", deals:["10% off first visit","New arrivals every Friday"],                                lat:40.5195, lng:-74.4155, addr:"77 Flores Blvd",        phone:"(732) 555-0306", hours:"Tue-Sun 11AM-7PM",  site:"casafloresboutique.com",  verified:false, trending:true  },
+];
+
+let reviews = {
+  1:  [{ rating:5, text:"Best croissants in town! The sourdough is incredible.",                         author:"Sarah M.",  date:"Feb 2025", helpful:12 },
+       { rating:4, text:"Great bread, lines can be long on weekends but worth it.",                      author:"Tom R.",    date:"Jan 2025", helpful:7  }],
+  3:  [{ rating:5, text:"Got my suit ready in 24 hours. Absolute lifesaver!",                            author:"James K.", date:"Mar 2025", helpful:9  }],
+  5:  [{ rating:4, text:"Great equipment and the trainers are super knowledgeable.",                     author:"Mike D.",  date:"Feb 2025", helpful:5  }],
+  9:  [{ rating:5, text:"Love the retro aesthetic and the popcorn is actually incredible.",              author:"Lisa H.",  date:"Mar 2025", helpful:18 },
+       { rating:5, text:"Nothing beats watching a classic film on the big screen here.",                 author:"Ana P.",   date:"Jan 2025", helpful:11 }],
+  12: [{ rating:5, text:"Fixed my cracked screen in under an hour. Cheaper than the Apple Store!",      author:"Dev S.",   date:"Mar 2025", helpful:22 }],
+  13: [{ rating:5, text:"Beautiful clothes and extremely helpful staff. Found my new go-to boutique.",  author:"Claire B.",date:"Feb 2025", helpful:8  }],
+  15: [{ rating:5, text:"Best jazz in the area. The cocktails are creative and the vibe is unmatched.", author:"Marco F.", date:"Mar 2025", helpful:31 }],
+  17: [{ rating:5, text:"The soup dumplings are outstanding — better than anything in the city!", author:"Jenny L.", date:"Feb 2025", helpful:14 }],
+  18: [{ rating:5, text:"Carbonara that tastes like Rome. We come here every anniversary.", author:"Rob & Sue", date:"Mar 2025", helpful:19 }],
+  20: [{ rating:5, text:"My favorite bookshop in the state. The staff picks are always perfect.", author:"Priya S.", date:"Mar 2025", helpful:11 },
+       { rating:4, text:"Great selection of indie zines and art supplies. Very supportive of local artists.", author:"Cam T.", date:"Feb 2025", helpful:7 }],
+  24: [{ rating:5, text:"Best fade I've ever gotten. The hot towel treatment is pure luxury.", author:"Marcus J.", date:"Mar 2025", helpful:16 }],
+  29: [{ rating:5, text:"The hot yoga class completely changed my mornings. Incredible instructors.", author:"Nina R.", date:"Feb 2025", helpful:13 }],
+  32: [{ rating:5, text:"Chrome nails lasted 3 weeks without chipping. Absolutely worth it!", author:"Alexa B.", date:"Mar 2025", helpful:20 }],
+  37: [{ rating:4, text:"Great prices on tires and fast service. Free balancing sealed the deal.", author:"Pete M.", date:"Jan 2025", helpful:8 }],
+  39: [{ rating:5, text:"My 10-year-old built his first app after just 4 classes. Truly amazing program.", author:"David K.", date:"Feb 2025", helpful:25 }],
+  41: [{ rating:4, text:"Kids had an absolute blast. Laser tag arena is huge and well-organized.", author:"Family C.", date:"Mar 2025", helpful:17 }],
+  43: [{ rating:5, text:"Cosmic bowling on Friday night is the best thing in town. Great bar too.", author:"Steph W.", date:"Mar 2025", helpful:22 }],
+  65: [{ rating:5, text:"Best braids I've ever gotten. The stylists here truly understand natural hair.", author:"Keisha T.", date:"Mar 2025", helpful:24 },
+       { rating:5, text:"Crown & Glory is a gem. The atmosphere is welcoming and the work is incredible.", author:"Monique R.", date:"Feb 2025", helpful:17 }],
+  66: [{ rating:5, text:"The fried chicken is life-changing. Mac and cheese tastes just like grandma's.", author:"DeShawn P.", date:"Mar 2025", helpful:28 },
+       { rating:4, text:"Huge portions, amazing flavors. The sweet potato pie alone is worth the trip.", author:"Tamara J.", date:"Feb 2025", helpful:19 }],
+  67: [{ rating:5, text:"Finally a bookstore that celebrates our stories. The staff recommendations are spot-on.", author:"Andre W.", date:"Mar 2025", helpful:21 }],
+  68: [{ rating:5, text:"The biryani is authentic and perfectly spiced. Best South Asian food in the area!", author:"Priya M.", date:"Mar 2025", helpful:16 }],
+  69: [{ rating:5, text:"My chronic back pain improved dramatically after just 3 sessions. Truly gifted practitioners.", author:"Susan L.", date:"Feb 2025", helpful:22 }],
+  70: [{ rating:5, text:"Every piece in this boutique tells a story. Bought a beautiful embroidered blouse I wear everywhere.", author:"Maria G.", date:"Mar 2025", helpful:13 }],
+  46: [{ rating:5, text:"Our dog comes home happy and exhausted every time. Best boarding ever!", author:"Tom & Lisa", date:"Feb 2025", helpful:15 }],
+  47: [{ rating:4, text:"Huge selection of plants and the staff actually know their horticulture.", author:"Claire O.", date:"Mar 2025", helpful:9 }],
+  51: [{ rating:5, text:"They cleaned my sensor for free during a lens repair. Exceptional service.", author:"Jordan P.", date:"Jan 2025", helpful:18 }],
+  53: [{ rating:5, text:"Scored a pair of limited Jordans here. Staff are super knowledgeable about drops.", author:"Kyle B.", date:"Mar 2025", helpful:28 }],
+  57: [{ rating:4, text:"Love the bulk section — saves money and reduces waste. Great kombucha selection.", author:"Dana F.", date:"Feb 2025", helpful:10 }],
+  59: [{ rating:5, text:"30 taps of local craft beers and the pub quiz is legitimately fun.", author:"Brendan M.", date:"Mar 2025", helpful:21 }],
+  60: [{ rating:5, text:"The rooftop view at sunset is stunning. Cocktails are creative and strong!", author:"Sophia A.", date:"Mar 2025", helpful:33 }],
+  63: [{ rating:5, text:"Our Google ranking jumped to page 1 in 6 weeks. These guys are the real deal.", author:"Owner, Fresh Pick", date:"Feb 2025", helpful:27 }],
+};
+
+let favorites = new Set([1, 9, 13, 15]);
+let activeTab = 'map';
+let activeCat = 'all';
+let currentBizId = null;
+let captchaN1 = 0, captchaN2 = 0, captchaAnswer = 0;
+let reviewRating = 5;
+let reviewOpenedAt = 0;
+let reviewInteractionScore = 0;
+let reviewSecurityToken = '';
+let reviewSubmitLog = [];
+let map = null, markerLayer = null;
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+function avgRating(id) {
+  const r = reviews[id] || [];
+  return r.length ? r.reduce((s,x)=>s+x.rating,0)/r.length : 0;
+}
+function reviewCount(id) { return (reviews[id]||[]).length; }
+
+function starsHTML(rating, size='') {
+  let s=''; for(let i=1;i<=5;i++) s+=`<span class="star ${i<=Math.round(rating)?'filled':''}${size?' '+size:''}">★</span>`;
+  return s;
+}
+
+function getFiltered(forFav=false) {
+  const sidebarQ = document.getElementById('sidebar-search')?.value || '';
+  const q = sidebarQ.toLowerCase();
+  const toolbarSort = document.getElementById('toolbar-sort')?.value;
+  const sort = toolbarSort || 'rating';
+  let list = BUSINESSES.filter(b => {
+    if (forFav && !favorites.has(b.id)) return false;
+    if (!forFav && activeCat !== 'all' && b.cat !== activeCat) return false;
+    if (q && !b.name.toLowerCase().includes(q) && !b.desc.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  list.sort((a,b)=>{
+    if (sort==='rating')  return avgRating(b.id)-avgRating(a.id);
+    if (sort==='reviews') return reviewCount(b.id)-reviewCount(a.id);
+    if (sort==='name')    return a.name.localeCompare(b.name);
+    if (sort==='deals')   return b.deals.length - a.deals.length;
+    return 0;
+  });
+  return list;
+}
+
+function showToast(msg) {
+  document.getElementById('toast-msg').textContent = msg;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+function updateStats() {
+}
+
+function buildBusinessCategoryOptions() {
+  const select = document.getElementById('biz-form-cat');
+  if (!select) return;
+  select.innerHTML = Object.entries(CATEGORIES).map(([key, c])=>
+    `<option value="${key}">${c.label}</option>`
+  ).join('');
+}
+
+function openRegisterBusinessModal() {
+  buildBusinessCategoryOptions();
+  ['name','desc','addr','phone','hours','site','deal'].forEach(id=>{
+    const field = document.getElementById(`biz-form-${id}`);
+    if (field) field.value = '';
+  });
+  document.getElementById('biz-form-cat').value = 'food';
+  document.getElementById('biz-form-owned').value = '';
+  document.getElementById('business-error').classList.add('hidden');
+  document.getElementById('business-overlay').classList.add('open');
+}
+
+function closeRegisterBusinessModal() {
+  document.getElementById('business-overlay').classList.remove('open');
+}
+
+function cleanFormText(value) {
+  return escapeHTML((value || '').trim());
+}
+
+function registerBusiness() {
+  const name = cleanFormText(document.getElementById('biz-form-name').value);
+  const cat = document.getElementById('biz-form-cat').value;
+  const desc = cleanFormText(document.getElementById('biz-form-desc').value);
+  const addr = cleanFormText(document.getElementById('biz-form-addr').value);
+  const phone = cleanFormText(document.getElementById('biz-form-phone').value);
+  const hours = cleanFormText(document.getElementById('biz-form-hours').value);
+  const site = cleanFormText(document.getElementById('biz-form-site').value.replace(/^https?:\/\//i, ''));
+  const owned = document.getElementById('biz-form-owned').value;
+  const deal = cleanFormText(document.getElementById('biz-form-deal').value);
+  const error = document.getElementById('business-error');
+
+  if (!name || !cat || !desc || !addr || !phone || !hours) {
+    error.textContent = 'Please fill out the business name, category, description, address, phone, and hours.';
+    error.classList.remove('hidden');
+    return;
+  }
+
+  const nextId = Math.max(...BUSINESSES.map(b=>b.id)) + 1;
+  const offset = (nextId - 70) * 0.0012;
+  const newBusiness = {
+    id: nextId,
+    name,
+    cat,
+    desc,
+    deals: deal ? [deal] : [],
+    lat: 40.519 + Math.sin(offset * 5) * 0.011,
+    lng: -74.415 + Math.cos(offset * 5) * 0.011,
+    addr,
+    phone,
+    hours,
+    site,
+    verified: false,
+    trending: false,
+    owned
+  };
+
+  BUSINESSES.push(newBusiness);
+  reviews[nextId] = [];
+  activeCat = 'all';
+  buildCatFilter();
+  buildMapLegend();
+  buildMapChips();
+  renderList();
+  renderFavorites();
+  updateMapMarkers();
+  closeRegisterBusinessModal();
+  showToast(`${name} was added to the directory!`);
+  switchTab('list');
+  setTimeout(()=>openDetail(newBusiness), 120);
+}
+
+function openSharedBusinessFromHash() {
+  const match = (location.hash || '').match(/^#business-(\d+)$/);
+  if (!match) return;
+  const b = BUSINESSES.find(x=>x.id===parseInt(match[1], 10));
+  if (!b) return;
+  if (activeTab === 'map' && map) setTimeout(()=>map.setView([b.lat, b.lng], 15), 80);
+  openDetail(b);
+}
+
+function init() {
+  buildBusinessCategoryOptions();
+  buildCatFilter();
+  buildMapLegend();
+  buildMapChips();
+  switchTab('map');
+  initMap();
+  renderList();
+  updateStats();
+  setTimeout(openSharedBusinessFromHash, 150);
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  ['map','list','favorites'].forEach(t => {
+    document.getElementById('nav-'+( t==='favorites'?'fav':t)).classList.toggle('active', t===tab);
+  });
+  document.getElementById('panel-map').classList.toggle('hidden', tab!=='map');
+  document.getElementById('panel-list').classList.toggle('hidden', tab!=='list');
+  document.getElementById('panel-fav').classList.toggle('hidden', tab!=='favorites');
+  document.getElementById('sidebar').classList.toggle('hidden', tab==='map');
+  if (tab==='map') { initMap(); setTimeout(()=>{ if(map) map.invalidateSize(); }, 150); }
+  else if (tab==='list') renderList();
+  else if (tab==='favorites') renderFavorites();
+}
+
+function buildCatFilter() {
+  const el = document.getElementById('cat-filter-list');
+  let html = `<button class="cat-filter-item active" data-cat="all" onclick="setCat('all')">
+    <span style="display:flex;align-items:center;width:16px;height:16px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span> All Categories
+    <span class="cat-count">${BUSINESSES.length}</span>
+  </button>`;
+  Object.entries(CATEGORIES).forEach(([key,c])=>{
+    const count = BUSINESSES.filter(b=>b.cat===key).length;
+    html += `<button class="cat-filter-item" data-cat="${key}" onclick="setCat('${key}')">
+      <span style="display:flex;align-items:center;width:16px;height:16px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${getCatIconPath(key)}"/></svg></span>
+      <span style="flex:1">${c.label}</span>
+      <span class="cat-count">${count}</span>
+    </button>`;
+  });
+  el.innerHTML = html;
+}
+
+function setCat(cat) {
+  activeCat = cat;
+  document.querySelectorAll('.cat-filter-item').forEach(b=>{ b.classList.toggle('active', b.dataset.cat===cat); });
+  document.querySelectorAll('.map-chip').forEach(b=>{ b.classList.toggle('active', b.dataset.cat===cat); });
+  renderList();
+  updateMapMarkers();
+}
+
+function buildMapLegend() {
+  const el = document.getElementById('map-legend-items');
+  el.innerHTML = Object.entries(CATEGORIES).map(([,c])=>
+    `<div class="legend-item">
+      <svg width="10" height="13" viewBox="0 0 10 13"><path d="M5 0C2.24 0 0 2.24 0 5c0 3.5 5 8 5 8s5-4.5 5-8C10 2.24 7.76 0 5 0z" fill="${c.color}"/></svg>
+      ${c.label}
+    </div>`
+  ).join('') + `<div style="border-top:1px solid #e5e0d8;margin:8px 0 4px;padding-top:6px;font-size:10px;font-weight:700;color:#9c968f;text-transform:uppercase;letter-spacing:.06em">Indicators</div>
+    <div class="legend-item"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#D62828"/><text x="6" y="9.5" text-anchor="middle" font-size="7" font-weight="bold" fill="white">$</text></svg> Has deals</div>
+    <div class="legend-item"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="#F77F00"/><text x="6" y="9.5" text-anchor="middle" font-size="9" fill="white">↑</text></svg> Trending</div>
+    <div class="legend-item"><svg width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="#22c55e" stroke-width="2"/><circle cx="6" cy="6" r="2" fill="#22c55e"/></svg> Verified</div>`;
+}
+
+function buildMapChips() {
+  const el = document.getElementById('map-cat-chips');
+  let html = `<button class="filter-chip active map-chip" data-cat="all" onclick="setCat('all')">All</button>`;
+  Object.entries(CATEGORIES).forEach(([key,c])=>{
+    html += `<button class="filter-chip map-chip" data-cat="${key}" onclick="setCat('${key}')">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0"><path d="${getCatIconPath(key)}"/></svg>${c.label}
+    </button>`;
+  });
+  el.innerHTML = html;
+}
+
+function initMap() {
+  if (map) return;
+  map = L.map('map', { zoomControl: false }).setView([40.519, -74.415], 13);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '&copy; CARTO' }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+  updateMapMarkers();
+  setTimeout(()=>map.invalidateSize(), 200);
+}
+
+function getCatIconPath(iconKey) {
+  const P = {
+    food:'M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7',
+    retail:'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0',
+    services:'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+    health:'M22 12h-4l-3 9L9 3l-3 9H2',
+    fitness:'M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3',
+    beauty:'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z',
+    automotive:'M3 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M17 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6',
+    education:'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z',
+    entertainment:'M2 2h20a2 2 0 0 1 0 4H2zM4 6v14M20 6v14M10 10v4M14 10v4',
+    pets:'M4.5 9.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM19.5 9.5a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM12 21a7 7 0 1 0 0-14 7 7 0 0 0 0 14z',
+    home:'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10',
+    tech:'M5 2h14a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01',
+    clothing:'M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z',
+    grocery:'M9 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM20 21a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6',
+    nightlife:'M9 18V5l12-2v13M6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 19a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+    professional:'M2 7h20a2 2 0 0 1 0 4H2zM16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16',
+    blackowned:'M18 8h-1a6 6 0 0 0-9 5.2V14H6l-2 7h16l-2-7h-2v-.8A6 6 0 0 0 18 8zM9 8a4 4 0 1 1 8 0',
+    minorityowned:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+  };
+  return P[iconKey] || 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM9 22V12h6v10';
+}
+
+function makePinSVG(color, iconKey, hasDeal, isTrending, isVerified) {
+  const pathD = getCatIconPath(iconKey);
+  const dealDot = hasDeal ? `<circle cx="26" cy="6" r="6" fill="#D62828" stroke="white" stroke-width="1.5"/><line x1="26" y1="3" x2="26" y2="9" stroke="white" stroke-width="1.5"/><line x1="23" y1="6" x2="29" y2="6" stroke="white" stroke-width="1.5"/>` : '';
+  const trendDot = isTrending && !hasDeal ? `<circle cx="26" cy="6" r="6" fill="#F77F00" stroke="white" stroke-width="1.5"/><polyline points="23,8 26,4 29,8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"/>` : '';
+  const verifiedStroke = isVerified ? 'stroke="#22c55e" stroke-width="2.5"' : 'stroke="white" stroke-width="2"';
+  const uid = Math.random().toString(36).slice(2,7);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="46" viewBox="0 0 36 46">
+    <defs><filter id="ps${uid}"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.28)"/></filter><clipPath id="pc${uid}"><circle cx="18" cy="16" r="10"/></clipPath></defs>
+    <path d="M18 2C10.3 2 4 8.3 4 16c0 10.5 14 28 14 28S32 26.5 32 16C32 8.3 25.7 2 18 2z" fill="${color}" ${verifiedStroke} filter="url(#ps${uid})"/>
+    <circle cx="18" cy="16" r="10" fill="rgba(255,255,255,0.9)"/>
+    <g clip-path="url(#pc${uid})" transform="translate(9,7)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${pathD}"/></svg>
+    </g>
+    ${dealDot}${trendDot}
+  </svg>`;
+}
+
+function updateMapMarkers() {
+  if (!map || !markerLayer) return;
+  markerLayer.clearLayers();
+  const list = activeCat==='all' ? BUSINESSES : BUSINESSES.filter(b=>b.cat===activeCat);
+  list.forEach(b=>{
+    const c = CATEGORIES[b.cat];
+    const avg = avgRating(b.id);
+    const rc = reviewCount(b.id);
+    const isFav = favorites.has(b.id);
+    const pinSVG = makePinSVG(c.color, c.icon, b.deals.length > 0, b.trending, b.verified);
+    const starsFilled = Math.round(avg);
+    const starsStr = [1,2,3,4,5].map(i=>`<span style="color:${i<=starsFilled?'#FCBF49':'#d1cdc7'};font-size:13px">★</span>`).join('');
+    const dealTagsHTML = b.deals.length ? b.deals.slice(0,2).map(d=>
+      `<div style="display:flex;align-items:center;gap:5px;background:#fdeceb;border:1px solid #f0a8a8;border-radius:6px;padding:4px 8px;font-size:11px;color:#b91c1c;font-weight:600;margin-bottom:4px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span>${d}</span></div>`
+    ).join('') : '';
+    const badgesHTML = [
+      b.verified ? `<span style="font-size:10px;font-weight:700;color:#15803d;background:#f0fdf4;border:1px solid #86efac;padding:2px 7px;border-radius:99px">✓ Verified</span>` : '',
+      b.trending  ? `<span style="font-size:10px;font-weight:700;color:#c2410c;background:#fff1e0;border:1px solid #fbcd95;padding:2px 7px;border-radius:99px">↑ Trending</span>` : '',
+      isFav       ? `<span style="font-size:10px;font-weight:700;color:#9a2d6e;background:#fdf4ff;border:1px solid #f0abfc;padding:2px 7px;border-radius:99px">Saved</span>` : '',
+    ].filter(Boolean).join(' ');
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="cursor:pointer;transition:transform 0.15s" onmouseover="this.style.transform='scale(1.15) translateY(-3px)'" onmouseout="this.style.transform='scale(1)'">${pinSVG}</div>`,
+      iconSize: [36, 44], iconAnchor: [18, 44], popupAnchor: [0, -46]
+    });
+    const popup = `<div style="font-family:Futura,'Trebuchet MS',Arial,sans-serif;width:230px;padding:0;border-radius:12px;overflow:hidden">
+      <div style="background:linear-gradient(135deg,${c.color}ee,${c.color}99);padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${getCatIconPath(c.icon)}"/></svg></div>
+        <div><div style="font-size:13px;font-weight:800;color:#fff;line-height:1.2">${b.name}</div><div style="font-size:10px;color:rgba(255,255,255,0.75);margin-top:2px">${c.label}</div></div>
+      </div>
+      <div style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><div>${starsStr}</div><span style="font-size:12px;font-weight:700;color:#1a1714">${avg > 0 ? avg.toFixed(1) : '—'}</span><span style="font-size:11px;color:#9c968f">(${rc} review${rc!==1?'s':''})</span></div>
+        ${badgesHTML ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px">${badgesHTML}</div>` : ''}
+        <div style="font-size:11px;color:#4b5563;margin-bottom:8px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${b.desc}</div>
+        <div style="font-size:11px;color:#6b6560;margin-bottom:4px;display:flex;gap:6px"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span><span>${b.addr}</span></div>
+        <div style="font-size:11px;color:#6b6560;margin-bottom:8px;display:flex;gap:6px"><span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span><span>${b.hours}</span></div>
+        ${dealTagsHTML ? `<div style="margin-bottom:8px">${dealTagsHTML}</div>` : ''}
+        <button onclick="window._openBiz(${b.id})" style="width:100%;background:${c.color};color:#fff;border:none;padding:9px;border-radius:8px;font-weight:700;cursor:pointer;font-size:12px;font-family:inherit" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">View Details →</button>
+      </div>
+    </div>`;
+    L.marker([b.lat, b.lng], {icon}).bindPopup(popup, { maxWidth: 250, className: 'custom-popup' }).addTo(markerLayer);
+  });
+}
+
+window._openBiz = function(id) { const b = BUSINESSES.find(x=>x.id===id); if (b) openDetail(b); };
+
+function bizCardHTML(b) {
+  const c = CATEGORIES[b.cat];
+  const avg = avgRating(b.id);
+  const rc = reviewCount(b.id);
+  const isFav = favorites.has(b.id);
+  return `<div class="biz-card" onclick="openDetail(BUSINESSES.find(x=>x.id===${b.id}))">
+    <div class="biz-card-stripe" style="background:${c.color}"></div>
+    <div class="biz-card-body">
+      <button class="fav-btn ${isFav?'active':''}" onclick="event.stopPropagation();toggleFav(${b.id})" title="Save">
+        ${isFav ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#D62828" stroke="#D62828" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>' : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>'}
+      </button>
+      <div class="biz-card-top">
+        <div class="biz-icon-wrap" style="background:${c.color}20"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c.color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${getCatIconPath(c.icon)}"/></svg></div>
+        <div style="flex:1;min-width:0">
+          <div class="biz-name">${b.name}</div>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+            <div class="stars stars-sm">${starsHTML(avg)}</div>
+            <span style="font-size:11px;color:#9c968f;font-weight:500">(${rc})</span>
+          </div>
+        </div>
+      </div>
+      <div class="biz-desc">${b.desc}</div>
+      <div class="biz-footer">
+        <span class="badge" style="background:${c.color}">${c.label}</span>
+        ${b.verified?'<span class="badge-verified">✓ Verified</span>':''}
+        ${b.trending?'<span class="badge-trending">↑ Trending</span>':''}
+        ${b.deals.length?`<span class="badge-deal"><svg width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' style='vertical-align:middle'><path d='M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z'/><line x1='7' y1='7' x2='7.01' y2='7'/></svg> ${b.deals.length} Deal${b.deals.length>1?'s':''}</span>`:''}
+      </div>
+      <div class="biz-addr"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${b.addr}</div>
+    </div>
+  </div>`;
+}
+
+function renderList() {
+  const list = getFiltered(false);
+  const grid = document.getElementById('biz-grid');
+  if (list.length===0) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="empty-title">No businesses found</div><div class="empty-sub">Try adjusting your search or category filter</div></div>`;
+  } else { grid.innerHTML = list.map(bizCardHTML).join(''); }
+  document.getElementById('list-count').textContent = `${list.length} business${list.length!==1?'es':''}`;
+}
+
+function renderFavorites() {
+  const list = getFiltered(true);
+  const grid = document.getElementById('fav-grid');
+  if (list.length===0) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="empty-title">No saved businesses yet</div><div class="empty-sub">Click the ♡ on any business to save it here</div></div>`;
+  } else { grid.innerHTML = list.map(bizCardHTML).join(''); }
+  document.getElementById('fav-list-count').textContent = `${list.length} saved`;
+}
+
+function toggleFav(id) {
+  if (favorites.has(id)) { favorites.delete(id); showToast('Removed from saved'); }
+  else { favorites.add(id); showToast('Saved!'); }
+  updateStats();
+  if (activeTab==='list') renderList();
+  if (activeTab==='favorites') renderFavorites();
+  if (currentBizId===id) refreshModalFavBtn();
+}
+
+function toggleFavFromModal() { if (!currentBizId) return; toggleFav(currentBizId); }
+
+function refreshModalFavBtn() {
+  const btn = document.getElementById('modal-fav-btn');
+  if (!btn || !currentBizId) return;
+  btn.innerHTML = favorites.has(currentBizId) ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="#D62828" stroke="#D62828" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Saved' : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> Save';
+  btn.classList.toggle('btn-primary', favorites.has(currentBizId));
+  btn.classList.toggle('btn-secondary', !favorites.has(currentBizId));
+}
+
+function businessShareText(b) {
+  const c = CATEGORIES[b.cat];
+  const avg = avgRating(b.id);
+  const ratingText = avg > 0 ? `${avg.toFixed(1)}/5` : 'No ratings yet';
+  const details = [
+    `${b.name} on Hometown Hub`,
+    `Category: ${c.label}`,
+    `Description: ${b.desc}`,
+    `Address: ${b.addr}`,
+    `Phone: ${b.phone}`,
+    `Hours: ${b.hours}`,
+    b.site ? `Website: ${b.site}` : '',
+    `Rating: ${ratingText}`,
+    b.deals.length ? `Deal: ${b.deals.join('; ')}` : '',
+    `Link: ${location.href.split('#')[0]}#business-${b.id}`
+  ].filter(Boolean);
+  return details.join('\n');
+}
+
+async function shareCurrentBusiness() {
+  const b = BUSINESSES.find(x=>x.id===currentBizId);
+  if (!b) return;
+  const text = businessShareText(b);
+  try {
+    await copyTextToClipboard(text);
+    showToast('Business details copied!');
+  } catch(e) {
+    window.prompt('Copy these business details:', text);
+  }
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) throw new Error('Copy failed');
+}
+
+function getInfoIcon(key) {
+  const I = {
+    pin:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+    phone: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.18 6.18l1.89-1.89a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    clock: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    globe: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+  };
+  return I[key] || '';
+}
+
+function openDetail(b) {
+  currentBizId = b.id;
+  const c = CATEGORIES[b.cat];
+  const avg = avgRating(b.id);
+  const rc = reviewCount(b.id);
+  const bizRevs = reviews[b.id] || [];
+  document.getElementById('modal-header-bg').style.background = `linear-gradient(135deg, ${c.color}dd, ${c.color}88)`;
+  document.getElementById('modal-icon').innerHTML = `<svg width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='${c.color}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='${getCatIconPath(c.icon)}'/></svg>`;
+  document.getElementById('modal-title').textContent = b.name;
+  document.getElementById('modal-stars').innerHTML = starsHTML(avg);
+  document.getElementById('modal-rating-text').textContent = `${avg.toFixed(1)} · ${rc} reviews`;
+  document.getElementById('modal-tab-deals').textContent = `Deals (${b.deals.length})`;
+  document.getElementById('modal-tab-reviews').textContent = `Reviews (${bizRevs.length})`;
+  refreshModalFavBtn();
+  const badges = [`<span class="badge" style="background:${c.color}">${c.label}</span>`,b.verified?'<span class="badge-verified">✓ Verified</span>':'',b.trending?'<span class="badge-trending">↑ Trending</span>':''].join('');
+  document.getElementById('modal-badges').innerHTML = badges;
+  document.getElementById('modal-desc').textContent = b.desc;
+  const infoItems = [{ icon:'pin', text:b.addr },{ icon:'phone', text:b.phone },{ icon:'clock', text:b.hours },...(b.site ? [{ icon:'globe', text:b.site }] : [])];
+  document.getElementById('modal-info-grid').innerHTML = infoItems.map(x=>`<div class="info-item"><span style="display:flex;align-items:center">${getInfoIcon(x.icon)}</span><span>${x.text}</span></div>`).join('');
+  const barsEl = document.getElementById('modal-rating-bars');
+  if (bizRevs.length > 0) {
+    barsEl.style.display = 'block';
+    document.getElementById('modal-rating-bars-content').innerHTML = [5,4,3,2,1].map(s=>{
+      const cnt = bizRevs.filter(r=>r.rating===s).length;
+      const pct = bizRevs.length ? (cnt/bizRevs.length)*100 : 0;
+      return `<div class="rating-bar-row"><span class="rating-bar-label">${s}</span><span style="font-size:10px;color:#FCBF49">★</span><div class="rating-bar-track"><div class="rating-bar-fill" style="width:${pct}%"></div></div><span class="rating-bar-count">${cnt}</span></div>`;
+    }).join('');
+  } else { barsEl.style.display = 'none'; }
+  document.getElementById('modal-deals-content').innerHTML = b.deals.length
+    ? b.deals.map(d=>`<div class="deal-card"><div class="deal-icon" style="display:flex;align-items:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b91c1c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><div class="flex-1"><div class="deal-text">${d}</div><div class="deal-sub">Show this screen to redeem</div></div><div class="deal-badge">Active</div></div>`).join('')
+    : `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></div><div class="empty-title">No active deals</div><div class="empty-sub">Check back soon!</div></div>`;
+  renderModalReviews(b.id);
+  switchModalTab('info');
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function renderModalReviews(bizId) {
+  const bizRevs = reviews[bizId] || [];
+  const el = document.getElementById('modal-reviews-content');
+  if (bizRevs.length===0) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div class="empty-title">No reviews yet</div><div class="empty-sub">Be the first to review!</div></div>`;
+  } else {
+    el.innerHTML = [...bizRevs].reverse().map(r=>`<div class="review-card">
+      <div class="review-header">
+        <div style="display:flex;align-items:center;gap:8px"><div class="reviewer-avatar">${(r.author||'A')[0]}</div><div><div class="reviewer-name">${r.author||'Anonymous'}</div><div class="stars stars-sm">${starsHTML(r.rating)}</div></div></div>
+        <div style="text-align:right"><div class="review-date">${r.date}</div>${r.helpful!==undefined?`<div class="review-helpful"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> ${r.helpful}</div>`:''}</div>
+      </div>
+      <div class="review-text">${r.text}</div>
+    </div>`).join('');
+  }
+  document.getElementById('modal-tab-reviews').textContent = `Reviews (${bizRevs.length})`;
+}
+
+function closeDetail() { document.getElementById('detail-modal').classList.remove('open'); currentBizId = null; }
+function closeDetailIfBg(e) { if(e.target===document.getElementById('detail-modal')) closeDetail(); }
+function switchModalTab(tab) {
+  document.querySelectorAll('#detail-modal .modal-tab').forEach(t=>{ t.classList.toggle('active', t.dataset.tab===tab); });
+  document.querySelectorAll('#detail-modal .modal-tab-panel').forEach(p=>{ p.classList.toggle('active', p.id==='tab-'+tab); });
+}
+
+let reviewTargetId = null;
+
+function setupReviewChallenge() {
+  const challengeType = Math.floor(Math.random() * 3);
+  if (challengeType === 0) {
+    captchaN1 = Math.floor(Math.random() * 18) + 7;
+    captchaN2 = Math.floor(Math.random() * 14) + 3;
+    captchaAnswer = captchaN1 + captchaN2;
+    document.getElementById('captcha-q').textContent = `${captchaN1} + ${captchaN2} =`;
+  } else if (challengeType === 1) {
+    captchaN1 = Math.floor(Math.random() * 16) + 12;
+    captchaN2 = Math.floor(Math.random() * 8) + 3;
+    captchaAnswer = captchaN1 - captchaN2;
+    document.getElementById('captcha-q').textContent = `${captchaN1} - ${captchaN2} =`;
+  } else {
+    captchaN1 = Math.floor(Math.random() * 7) + 3;
+    captchaN2 = Math.floor(Math.random() * 5) + 2;
+    captchaAnswer = captchaN1 * captchaN2;
+    document.getElementById('captcha-q').textContent = `${captchaN1} × ${captchaN2} =`;
+  }
+}
+
+function openReviewFromModal() {
+  reviewTargetId = currentBizId;
+  const b = BUSINESSES.find(x=>x.id===currentBizId);
+  document.getElementById('review-biz-name').textContent = b ? b.name : '';
+  document.getElementById('review-author').value = '';
+  document.getElementById('review-text').value = '';
+  document.getElementById('review-website').value = '';
+  document.getElementById('review-company').value = '';
+  document.getElementById('review-phone').value = '';
+  reviewSecurityToken = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  document.getElementById('review-token').value = reviewSecurityToken;
+  reviewRating = 5;
+  reviewOpenedAt = Date.now();
+  reviewInteractionScore = 0;
+  updateStarPicker(5);
+  document.getElementById('captcha-ans').value = '';
+  document.getElementById('captcha-error').classList.add('hidden');
+  setupReviewChallenge();
+  goToStep1();
+  document.getElementById('review-modal').classList.add('open');
+}
+
+function closeReview() { document.getElementById('review-modal').classList.remove('open'); }
+function closeReviewIfBg(e) { if(e.target===document.getElementById('review-modal')) closeReview(); }
+
+document.querySelectorAll('#stars-picker .star').forEach(s=>{
+  s.addEventListener('click', ()=>{ reviewInteractionScore += 1; reviewRating = parseInt(s.dataset.val); updateStarPicker(reviewRating); });
+  s.addEventListener('mouseover', ()=>{ updateStarPicker(parseInt(s.dataset.val), true); });
+  s.addEventListener('mouseout', ()=>{ updateStarPicker(reviewRating); });
+});
+
+['review-author','review-text','captcha-ans'].forEach(id=>{
+  const field = document.getElementById(id);
+  if (field) {
+    field.addEventListener('focus', ()=>{ reviewInteractionScore += 1; });
+    field.addEventListener('input', ()=>{ reviewInteractionScore += 1; });
+  }
+});
+
+function updateStarPicker(val, hover=false) {
+  const labels = ['','Terrible','Poor','Average','Good','Excellent!'];
+  document.querySelectorAll('#stars-picker .star').forEach(s=>{ s.classList.toggle('filled', parseInt(s.dataset.val)<=val); });
+  if (!hover) document.getElementById('rating-label-text').textContent = labels[val] || '';
+}
+
+function goToStep1() {
+  document.getElementById('review-step-1').classList.add('active');
+  document.getElementById('review-step-2').classList.remove('active');
+  document.getElementById('review-progress').style.width = '50%';
+}
+
+function goToStep2() {
+  const text = document.getElementById('review-text').value.trim();
+  if (!text) { alert('Please write a review first.'); return; }
+  document.getElementById('preview-stars').innerHTML = starsHTML(reviewRating);
+  document.getElementById('preview-text').textContent = text;
+  document.getElementById('review-step-1').classList.remove('active');
+  document.getElementById('review-step-2').classList.add('active');
+  document.getElementById('review-progress').style.width = '100%';
+}
+
+function clearCaptchaError() { document.getElementById('captcha-error').classList.add('hidden'); }
+
+function flagReviewError(message) {
+  const el = document.getElementById('captcha-error');
+  el.textContent = message;
+  el.classList.remove('hidden');
+}
+
+function reviewLooksAutomated() {
+  const now = Date.now();
+  const honeypot = [
+    document.getElementById('review-website').value,
+    document.getElementById('review-company').value,
+    document.getElementById('review-phone').value
+  ].join('').trim();
+  if (honeypot) return 'Something went wrong. Please try again.';
+  if (document.getElementById('review-token').value !== reviewSecurityToken) return 'Please refresh this review form and try again.';
+  if (now - reviewOpenedAt < 5000) return 'Please take a moment to review before submitting.';
+  if (reviewInteractionScore < 2) return 'Please interact with the form before submitting.';
+
+  reviewSubmitLog = reviewSubmitLog.filter(item => now - item.time < 24 * 60 * 60 * 1000);
+  const recentForBusiness = reviewSubmitLog.filter(item => item.bizId === reviewTargetId && now - item.time < 60 * 60 * 1000);
+  if (recentForBusiness.length >= 1) return 'You already reviewed this business recently. Please try again later.';
+  if (reviewSubmitLog.length >= 5) return 'Too many reviews submitted today. Please try again tomorrow.';
+
+  const originalText = document.getElementById('review-text').value.trim();
+  const text = originalText.toLowerCase();
+  if (originalText.length < 12) return 'Please add a little more detail to your review.';
+  const duplicate = Object.values(reviews).flat().some(r => (r.text || '').trim().toLowerCase() === text);
+  if (duplicate) return 'This looks like a duplicate review.';
+  if ((text.match(/https?:\/\/|www\\./g) || []).length > 0) return 'Please remove links from your review.';
+  if (/(.)\1{7,}/.test(text)) return 'Please avoid repeated characters in your review.';
+  if ((text.match(/\b(buy now|free money|click here|promo code|limited offer)\b/g) || []).length > 0) return 'Please remove promotional language from your review.';
+
+  return '';
+}
+
+function submitReview() {
+  const ans = parseInt(document.getElementById('captcha-ans').value, 10);
+  if (ans !== captchaAnswer) { flagReviewError('Incorrect answer — try again!'); return; }
+  const botMessage = reviewLooksAutomated();
+  if (botMessage) { flagReviewError(botMessage); return; }
+  const text = document.getElementById('review-text').value.trim();
+  const author = document.getElementById('review-author').value.trim() || 'Anonymous';
+  const date = new Date().toLocaleDateString('en-US',{month:'short',year:'numeric'});
+  if (!reviews[reviewTargetId]) reviews[reviewTargetId] = [];
+  reviews[reviewTargetId].push({ rating: reviewRating, text, author, date, helpful:0 });
+  reviewSubmitLog.push({ bizId: reviewTargetId, time: Date.now() });
+  closeReview();
+  updateStats();
+  showToast('Review submitted for moderation!');
+  if (currentBizId === reviewTargetId) {
+    renderModalReviews(reviewTargetId);
+    const avg = avgRating(reviewTargetId);
+    const rc = reviewCount(reviewTargetId);
+    document.getElementById('modal-stars').innerHTML = starsHTML(avg);
+    document.getElementById('modal-rating-text').textContent = `${avg.toFixed(1)} · ${rc} reviews`;
+    const bizRevs = reviews[reviewTargetId]||[];
+    const barsEl = document.getElementById('modal-rating-bars');
+    barsEl.style.display = 'block';
+    document.getElementById('modal-rating-bars-content').innerHTML = [5,4,3,2,1].map(s=>{
+      const cnt = bizRevs.filter(r=>r.rating===s).length;
+      const pct = bizRevs.length ? (cnt/bizRevs.length)*100 : 0;
+      return `<div class="rating-bar-row"><span class="rating-bar-label">${s}</span><span style="font-size:10px;color:#FCBF49">★</span><div class="rating-bar-track"><div class="rating-bar-fill" style="width:${pct}%"></div></div><span class="rating-bar-count">${cnt}</span></div>`;
+    }).join('');
+  }
+  if (activeTab==='list') renderList();
+  if (activeTab==='favorites') renderFavorites();
+}
+
+// ═══════════════════════════════════════════════
+//  CHATBOT
+// ═══════════════════════════════════════════════
+let chatHistory = [];
+let chatOpen = false;
+let chatBotTyping = false;
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  const win = document.getElementById('chat-window');
+  const fab = document.getElementById('chat-fab');
+  const notif = document.getElementById('chat-notif');
+  fab.classList.toggle('open', chatOpen);
+  if (chatOpen) {
+    win.style.display = 'flex';
+    requestAnimationFrame(()=>{ win.classList.add('open'); });
+    notif.style.display = 'none';
+    if (chatHistory.length === 0) {
+      setTimeout(()=>addBotMessage('Hi, how would you like me to assist you?'), 300);
+    }
+    setTimeout(()=>document.getElementById('chat-input').focus(), 350);
+  } else {
+    win.classList.remove('open');
+    setTimeout(()=>{ win.style.display = 'none'; }, 200);
+  }
+}
+
+function addBotMessage(text) {
+  const msgs = document.getElementById('chat-messages');
+  const typing = document.getElementById('chat-typing');
+  if (typing) typing.remove();
+  const div = document.createElement('div');
+  div.className = 'chat-msg bot';
+  div.innerHTML = `<div class="msg-avatar bot-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+    <div class="msg-bubble">${markdownToHTML(text)}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  chatBotTyping = false;
+  document.getElementById('chat-send').disabled = false;
+}
+
+function addUserMessage(text) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg user';
+  div.innerHTML = `<div class="msg-bubble">${escapeHTML(text)}</div><div class="msg-avatar" style="background:#6b6560"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function showTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg bot'; div.id = 'chat-typing';
+  div.innerHTML = `<div class="msg-avatar bot-av"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b6560" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+    <div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function sendSuggestion(btn) {
+  const text = btn.textContent;
+  document.getElementById('chat-suggestions').style.display = 'none';
+  sendChatMessage(text);
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || chatBotTyping) return;
+  input.value = '';
+  document.getElementById('chat-suggestions').style.display = 'none';
+  sendChatMessage(text);
+}
+
+const PRECODED_RESPONSES = [
+  { patterns: ['black-owned', 'black owned', 'african american', 'black business', 'black businesses'],
+    response: `Here are our **Black-owned businesses** on Hometown Hub:\n\n- **Crown & Glory Salon** — Natural hair, braids & locs. Tue-Sat 9AM-7PM.\n- **Soulful Kitchen** — Southern comfort food. Wed-Mon 11AM-9PM.\n- **Legacy Books & Culture** — Black literature & history. Mon-Sat 10AM-7PM.\n- **The Velvet Lounge** — Jazz club & cocktails. Free cover Wednesdays.\n- **Chrome Nail Bar** — Gel, acrylic, chrome. 20% off first visit.\n- **Horizon Accounting** — CPA firm for small businesses.\n\nYou can also filter by Black-Owned in the directory.` },
+  { patterns: ['minority-owned', 'minority owned', 'hispanic', 'latino', 'latina', 'asian-owned', 'asian owned', 'minority business', 'minority businesses'],
+    response: `Here are some **minority-owned businesses** to explore:\n\n- **Golden Spice Kitchen** — South Asian cuisine.\n- **Lotus Wellness & Acupuncture** — Traditional Chinese medicine.\n- **Casa Flores Boutique** — Latina-owned clothing and artisan jewelry.\n- **Sunrise Dim Sum** — Cantonese dim sum.\n- **Code Academy Jr.** — Coding and STEM workshops for kids.\n- **BrandFirst Marketing** — Digital marketing for local businesses.\n\nUse the Minority-Owned filter to see the full list.` },
+  { patterns: ['best rated', 'top rated', 'highest rated', 'best businesses', 'most popular', 'top businesses'],
+    response: `Some highly rated community favorites are:\n\n- **The Velvet Lounge** — jazz, cocktails, and a standout atmosphere.\n- **Gizmo Galaxy** — fast electronics repairs and tech support.\n- **Crown & Glory Salon** — natural styles, braids, locs, and protective styles.\n- **Soulful Kitchen** — Southern comfort food.\n- **Joe's Artisan Bakery** — fresh sourdough, pastries, and custom cakes.\n\nThe directory can sort by highest rated too.` },
+  { patterns: ['food', 'eat', 'restaurant', 'restaurants', 'dining', 'hungry', 'lunch', 'dinner', 'breakfast', 'where to eat'],
+    response: `For food, try:\n\n- **Joe's Artisan Bakery** for pastries and sourdough.\n- **Soulful Kitchen** for Southern comfort food.\n- **Sunrise Dim Sum** for Cantonese brunch.\n- **Piccolo Trattoria** for Italian.\n- **Taco Roots** for street-style tacos.\n- **Golden Spice Kitchen** for South Asian dishes.\n\nYou can filter by Food & Dining to browse all options.` },
+  { patterns: ['deals', 'discount', 'discounts', 'offers', 'sale', 'free', 'cheap'],
+    response: `Here are a few deals worth checking out:\n\n- **Joe's Artisan Bakery** — BOGO croissants before 10AM.\n- **Taco Roots** — Taco Tuesday: 3 for $6.\n- **Iron Core Gym** — first week free.\n- **Chrome Nail Bar** — 20% off first visit.\n- **Sharp Edge Barbers** — free hot towel shave with a haircut.\n\nBusinesses with deals also show a deal badge in the directory.` },
+  { patterns: ['open late', 'open now', 'late night', 'open tonight', 'after 9', 'after 10'],
+    response: `These are good late-night picks:\n\n- **The Velvet Lounge** — Wed-Sun until 2AM.\n- **Craft Republic Bar** — daily until 2AM.\n- **Rooftop Social** — Wed-Sun until 2AM.\n- **The Laugh Factory** — Thu-Sun until 1AM.\n- **Bowlero Lanes** — daily until 1AM.\n- **Iron Core Gym** — daily until 11PM.` },
+  { patterns: ['fitness', 'gym', 'workout', 'exercise', 'yoga', 'crossfit', 'swim'],
+    response: `Fitness options include:\n\n- **Iron Core Gym** — weights, cardio, and group classes.\n- **Zen Yoga Studio** — hot yoga and vinyasa.\n- **CrossPeak Athletics** — CrossFit and HIIT.\n- **Splash Aquatic Center** — pool, swim lessons, and water aerobics.` },
+  { patterns: ['hair', 'salon', 'barber', 'haircut', 'nails', 'nail', 'beauty', 'spa', 'eyebrow', 'brow'],
+    response: `Beauty and personal care picks:\n\n- **Crown & Glory Salon** — natural hair, braids, locs, and protective styles.\n- **Sharp Edge Barbers** — cuts, shaves, and beard styling.\n- **Chrome Nail Bar** — gel, acrylic, and nail art.\n- **The Brow Bar** — threading, tinting, and lash lifts.\n- **Glow Up Beauty** — skincare and organic beauty products.` },
+  { patterns: ['pet', 'pets', 'dog', 'cat', 'vet', 'grooming', 'boarding'],
+    response: `Pet care businesses include:\n\n- **Happy Paws Clinic** — vet care, grooming, and boarding.\n- **Waggy Tails Grooming** — dog and cat grooming.\n- **Critter Corner Pet Shop** — local pet supplies.\n- **Paws & Stay Boarding** — overnight boarding, daycare, and training.` },
+  { patterns: ['kids', 'children', 'family', 'preschool', 'tutor', 'tutoring', 'education', 'learning', 'school'],
+    response: `For kids and families, check out:\n\n- **Little Minds Preschool** — play-based preschool.\n- **Brainiac Tutoring** — K-12 and college tutoring.\n- **Code Academy Jr.** — coding, robotics, and STEM.\n- **Language Hub** — Spanish, Mandarin, French, and ESL.\n- **Laser Zone Arena** — laser tag, arcade games, and VR.` },
+  { patterns: ['nightlife', 'bar', 'bars', 'drinks', 'cocktails', 'jazz', 'comedy'],
+    response: `Night out options:\n\n- **The Velvet Lounge** — jazz club and craft cocktails.\n- **Craft Republic Bar** — rotating craft beer taps.\n- **Rooftop Social** — rooftop views and DJs.\n- **The Laugh Factory** — comedy shows.\n- **Bowlero Lanes** — bowling, arcade, and sports bar.` },
+  { patterns: ['register', 'add business', 'add my business', 'list my business', 'small business', 'own business'],
+    response: `You can register a small business from the **Add Business** button in the top-right. Add the name, category, description, address, phone, hours, website, ownership badge, and an optional deal. Once submitted, it appears in the directory and on the map with the category color.` },
+  { patterns: ['hello', 'hi', 'hey', 'good morning', 'good afternoon', 'help', 'what can you do'],
+    response: `Hi, how would you like me to assist you?\n\nYou can ask about **restaurants**, **deals**, **Black-owned businesses**, **minority-owned businesses**, **open late** spots, **fitness**, **beauty**, **pet care**, or how to **add a business**.` },
+];
+
+function getPrecodedResponse(text) {
+  const t = text.toLowerCase().trim();
+  for (const item of PRECODED_RESPONSES) {
+    if (item.patterns.some(p => t.includes(p))) return item.response;
+  }
+  return null;
+}
+
+function buildBusinessMatchResponse(text) {
+  const t = text.toLowerCase();
+  const matches = BUSINESSES.filter(b =>
+    b.name.toLowerCase().includes(t) ||
+    t.includes(b.name.toLowerCase()) ||
+    b.desc.toLowerCase().includes(t)
+  ).slice(0, 4);
+  if (!matches.length) return null;
+  return `Here ${matches.length === 1 ? 'is a matching business' : 'are a few matching businesses'}:\n\n` + matches.map(b => {
+    const c = CATEGORIES[b.cat];
+    const avg = avgRating(b.id);
+    return `- **${b.name}** — ${c.label}. ${b.hours}. ${avg > 0 ? `${avg.toFixed(1)}/5 rating.` : 'No reviews yet.'}`;
+  }).join('\n');
+}
+
+function sendChatMessage(text) {
+  if (chatBotTyping) return;
+  addUserMessage(text);
+  chatHistory.push({ role: 'user', content: text });
+  chatBotTyping = true;
+  document.getElementById('chat-send').disabled = true;
+  showTyping();
+
+  setTimeout(() => {
+    const reply = getPrecodedResponse(text) || buildBusinessMatchResponse(text) || `I can help with quick directory questions. Try asking about **food**, **deals**, **Black-owned businesses**, **minority-owned businesses**, **open late** places, **fitness**, **beauty**, **pet care**, or how to **add a business**.`;
+    chatHistory.push({ role: 'assistant', content: reply });
+    addBotMessage(reply);
+  }, 500);
+}
+
+function markdownToHTML(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^• (.+)$/gm,'<li>$1</li>')
+    .replace(/^- (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, s=>'<ul>'+s+'</ul>')
+    .replace(/\n/g,'<br>');
+}
+
+function escapeHTML(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function doLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  document.getElementById('chat-fab').classList.remove('hidden');
+  init();
+}
+
+function doLogout() {
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('chat-fab').classList.add('hidden');
+  const win = document.getElementById('chat-window');
+  win.classList.remove('open');
+  win.style.display = 'none';
+  chatOpen = false;
+  chatHistory = [];
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('chat-suggestions').style.display = 'flex';
+  if (map) { map.remove(); map = null; markerLayer = null; }
+  activeTab = 'map';
+  activeCat = 'all';
+  currentBizId = null;
+}
+
+let darkMode = false;
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  document.getElementById('theme-icon-sun').style.display  = darkMode ? 'none' : '';
+  document.getElementById('theme-icon-moon').style.display = darkMode ? '' : 'none';
+  try { localStorage.setItem('hh-theme', darkMode ? 'dark' : 'light'); } catch(e) {}
+}
+(function() {
+  let saved = '';
+  try { saved = localStorage.getItem('hh-theme') || ''; } catch(e) {}
+  if (saved === 'dark') {
+    darkMode = true;
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      const s = document.getElementById('theme-icon-sun');
+      const m = document.getElementById('theme-icon-moon');
+      if (s) s.style.display = 'none';
+      if (m) m.style.display = '';
+    });
+  }
+})();
+
+function getPasswordChecks(password) {
+  return {
+    length: password.length > 8,
+    symbol: /[^A-Za-z0-9]/.test(password),
+    number: /\d/.test(password),
+    capital: /[A-Z]/.test(password)
+  };
+}
+
+function updatePasswordRequirements() {
+  const password = document.getElementById('signup-password')?.value || '';
+  const checks = getPasswordChecks(password);
+  Object.entries(checks).forEach(([key, isMet])=>{
+    const item = document.getElementById(`req-${key}`);
+    if (item) item.classList.toggle('met', isMet);
+  });
+  const error = document.getElementById('signup-error');
+  if (error) error.classList.add('hidden');
+  return Object.values(checks).every(Boolean);
+}
+
+function createAccount() {
+  const password = document.getElementById('signup-password').value;
+  const confirm = document.getElementById('signup-confirm').value;
+  const terms = document.getElementById('signup-terms').checked;
+  const error = document.getElementById('signup-error');
+  const strongEnough = updatePasswordRequirements();
+
+  if (!strongEnough) {
+    error.textContent = 'Please meet all password requirements.';
+    error.classList.remove('hidden');
+    return;
+  }
+  if (password !== confirm) {
+    error.textContent = 'Passwords do not match.';
+    error.classList.remove('hidden');
+    return;
+  }
+  if (!terms) {
+    error.textContent = 'Please agree to the Terms of Service and Privacy Policy.';
+    error.classList.remove('hidden');
+    return;
+  }
+
+  alert('Account created!');
+  closeSignupModal();
+}
+
+function openSignupModal() {
+  document.getElementById('signup-overlay').classList.add('open');
+  updatePasswordRequirements();
+}
+function closeSignupModal() { document.getElementById('signup-overlay').classList.remove('open'); }
+function openHowToModal() { document.getElementById('howto-overlay').classList.add('open'); }
+function closeHowToModal() { document.getElementById('howto-overlay').classList.remove('open'); }
+const ACCESS_DEFAULTS = {
+  textSize: 'normal',
+  dyslexiaFont: false,
+  highContrast: false,
+  reduceMotion: false,
+  screenReader: true
+};
+let accessPrefs = { ...ACCESS_DEFAULTS };
+
+function saveAccessPrefs() {
+  try { localStorage.setItem('hh-accessibility', JSON.stringify(accessPrefs)); } catch(e) {}
+}
+
+function announceAccessChange(message) {
+  if (!accessPrefs.screenReader) return;
+  let live = document.getElementById('access-live-region');
+  if (!live) {
+    live = document.createElement('div');
+    live.id = 'access-live-region';
+    live.setAttribute('aria-live', 'polite');
+    live.setAttribute('aria-atomic', 'true');
+    live.style.position = 'absolute';
+    live.style.width = '1px';
+    live.style.height = '1px';
+    live.style.overflow = 'hidden';
+    live.style.clip = 'rect(0 0 0 0)';
+    document.body.appendChild(live);
+  }
+  live.textContent = message;
+}
+
+function updateAccessControls() {
+  const sizes = ['small','normal','large'];
+  sizes.forEach(size => {
+    const btn = document.getElementById(`access-text-${size}`);
+    if (btn) btn.classList.toggle('access-ctrl-active', accessPrefs.textSize === size);
+  });
+  const dyslexia = document.getElementById('access-dyslexia');
+  const contrast = document.getElementById('access-contrast');
+  const motion = document.getElementById('access-motion');
+  const screenReader = document.getElementById('access-screen-reader');
+  if (dyslexia) dyslexia.checked = accessPrefs.dyslexiaFont;
+  if (contrast) contrast.checked = accessPrefs.highContrast;
+  if (motion) motion.checked = accessPrefs.reduceMotion;
+  if (screenReader) screenReader.checked = accessPrefs.screenReader;
+}
+
+function applyAccessPrefs(announce=false) {
+  document.body.classList.toggle('access-text-small', accessPrefs.textSize === 'small');
+  document.body.classList.toggle('access-text-large', accessPrefs.textSize === 'large');
+  document.body.classList.toggle('dyslexia-font', accessPrefs.dyslexiaFont);
+  document.body.classList.toggle('high-contrast', accessPrefs.highContrast);
+  document.body.classList.toggle('reduce-motion', accessPrefs.reduceMotion);
+  document.body.classList.toggle('screen-reader-enhanced', accessPrefs.screenReader);
+  document.documentElement.style.setProperty('--access-font-scale', accessPrefs.textSize === 'small' ? '0.92' : accessPrefs.textSize === 'large' ? '1.16' : '1');
+
+  const accessButton = document.querySelector('[onclick="openAccessModal()"]');
+  if (accessButton) accessButton.setAttribute('aria-label', 'Open accessibility options');
+  const search = document.getElementById('sidebar-search');
+  if (search) search.setAttribute('aria-label', 'Search businesses');
+  const sort = document.getElementById('toolbar-sort');
+  if (sort) sort.setAttribute('aria-label', 'Sort businesses');
+  const accessDialog = document.querySelector('#access-overlay .util-modal');
+  if (accessDialog) {
+    accessDialog.setAttribute('role', 'dialog');
+    accessDialog.setAttribute('aria-modal', 'true');
+    accessDialog.setAttribute('aria-labelledby', 'access-modal-title');
+  }
+  const title = document.querySelector('#access-overlay .util-modal-title');
+  if (title) title.id = 'access-modal-title';
+
+  updateAccessControls();
+  if (map) setTimeout(()=>map.invalidateSize(), 50);
+  if (announce) announceAccessChange('Accessibility preference updated.');
+}
+
+function setTextSize(size) {
+  accessPrefs.textSize = size;
+  saveAccessPrefs();
+  applyAccessPrefs(true);
+}
+
+function setDyslexiaFont(enabled) {
+  accessPrefs.dyslexiaFont = enabled;
+  saveAccessPrefs();
+  applyAccessPrefs(true);
+}
+
+function setHighContrast(enabled) {
+  accessPrefs.highContrast = enabled;
+  saveAccessPrefs();
+  applyAccessPrefs(true);
+}
+
+function setReduceMotion(enabled) {
+  accessPrefs.reduceMotion = enabled;
+  saveAccessPrefs();
+  applyAccessPrefs(true);
+}
+
+function setScreenReaderSupport(enabled) {
+  accessPrefs.screenReader = enabled;
+  saveAccessPrefs();
+  applyAccessPrefs(enabled);
+}
+
+function loadAccessPrefs() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('hh-accessibility') || '{}');
+    accessPrefs = { ...ACCESS_DEFAULTS, ...saved };
+  } catch(e) {
+    accessPrefs = { ...ACCESS_DEFAULTS };
+  }
+  applyAccessPrefs(false);
+}
+
+function openAccessModal() {
+  applyAccessPrefs(false);
+  document.getElementById('access-overlay').classList.add('open');
+}
+function closeAccessModal() { document.getElementById('access-overlay').classList.remove('open'); }
+loadAccessPrefs();
+window.addEventListener('hashchange', () => {
+  if (document.getElementById('app-screen')?.style.display === 'flex') openSharedBusinessFromHash();
+});
+</script>
+</body>
+</html>
+
