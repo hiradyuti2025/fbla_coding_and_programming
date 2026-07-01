@@ -1432,7 +1432,7 @@ let reviews = {
 };
 
 const DEFAULT_FAVORITES = [1, 9, 13, 15];
-let favorites = loadFavorites();
+let favorites = new Set(DEFAULT_FAVORITES);
 let activeTab = 'map';
 let activeCat = 'all';
 let currentBizId = null;
@@ -1443,7 +1443,7 @@ let reviewInteractionScore = 0;
 let reviewSecurityToken = '';
 let reviewSubmitLog = [];
 let map = null, markerLayer = null;
-let summaryActivity = loadSummaryActivity();
+let summaryActivity = [];
 
 // ═══════════════════════════════════════════════
 //  HELPERS
@@ -1495,34 +1495,6 @@ function updateStats() {
   renderSummaryReport();
 }
 
-function loadFavorites() {
-  try {
-    const saved = JSON.parse(localStorage.getItem('hh-favorites') || 'null');
-    if (Array.isArray(saved)) return new Set(saved.map(id=>parseInt(id, 10)).filter(Number.isFinite));
-  } catch(e) {}
-  return new Set(DEFAULT_FAVORITES);
-}
-
-function saveFavorites() {
-  try {
-    localStorage.setItem('hh-favorites', JSON.stringify([...favorites]));
-  } catch(e) {}
-}
-
-function loadSummaryActivity() {
-  try {
-    return JSON.parse(localStorage.getItem('hh-summary-activity') || '[]');
-  } catch(e) {
-    return [];
-  }
-}
-
-function saveSummaryActivity() {
-  try {
-    localStorage.setItem('hh-summary-activity', JSON.stringify(summaryActivity));
-  } catch(e) {}
-}
-
 function addSummaryActivity(type, bizId, detail, meta={}) {
   const b = BUSINESSES.find(x=>x.id===bizId);
   summaryActivity.unshift({
@@ -1535,7 +1507,6 @@ function addSummaryActivity(type, bizId, detail, meta={}) {
     at: new Date().toISOString()
   });
   summaryActivity = summaryActivity.slice(0, 100);
-  saveSummaryActivity();
   renderSummaryReport();
 }
 
@@ -1974,13 +1945,11 @@ function renderFavorites() {
 function toggleFav(id) {
   if (favorites.has(id)) {
     favorites.delete(id);
-    saveFavorites();
     addSummaryActivity('removed', id);
     showToast('Removed from saved');
   }
   else {
     favorites.add(id);
-    saveFavorites();
     addSummaryActivity('saved', id);
     showToast('Saved!');
   }
