@@ -1431,7 +1431,8 @@ let reviews = {
   63: [{ rating:5, text:"Our Google ranking jumped to page 1 in 6 weeks. These guys are the real deal.", author:"Owner, Fresh Pick", date:"Feb 2025", helpful:27 }],
 };
 
-let favorites = new Set([1, 9, 13, 15]);
+const DEFAULT_FAVORITES = [1, 9, 13, 15];
+let favorites = loadFavorites();
 let activeTab = 'map';
 let activeCat = 'all';
 let currentBizId = null;
@@ -1494,6 +1495,20 @@ function updateStats() {
   renderSummaryReport();
 }
 
+function loadFavorites() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('hh-favorites') || 'null');
+    if (Array.isArray(saved)) return new Set(saved.map(id=>parseInt(id, 10)).filter(Number.isFinite));
+  } catch(e) {}
+  return new Set(DEFAULT_FAVORITES);
+}
+
+function saveFavorites() {
+  try {
+    localStorage.setItem('hh-favorites', JSON.stringify([...favorites]));
+  } catch(e) {}
+}
+
 function loadSummaryActivity() {
   try {
     return JSON.parse(localStorage.getItem('hh-summary-activity') || '[]');
@@ -1527,36 +1542,44 @@ function addSummaryActivity(type, bizId, detail, meta={}) {
 function renderSummaryReport() {
   const report = document.getElementById('summary-report');
   if (!report) return;
-  const savedItems = summaryActivity.filter(item=>item.type==='saved');
+  const currentSavedBusinesses = BUSINESSES.filter(b=>favorites.has(b.id));
+  const savedItems = currentSavedBusinesses.map(b=>({
+    type: 'saved',
+    bizId: b.id,
+    businessName: b.name,
+    category: b.cat,
+    detail: '',
+    at: ''
+  }));
   const reviewItems = summaryActivity.filter(item=>item.type==='review');
   const savedCount = savedItems.length;
   const reviewCountTotal = reviewItems.length;
-  const uniqueSaved = new Set(savedItems.map(item=>item.bizId)).size;
+  const uniqueSaved = savedCount;
   const uniqueReviewed = new Set(reviewItems.map(item=>item.bizId)).size;
   const reviewRatings = reviewItems.map(item=>parseFloat(item.rating)).filter(r=>Number.isFinite(r));
   const avgSubmittedRating = reviewRatings.length ? reviewRatings.reduce((sum, rating)=>sum + rating, 0) / reviewRatings.length : 0;
   const latestItem = summaryActivity[0];
   document.getElementById('summary-saved-count').textContent = savedCount;
   document.getElementById('summary-review-count').textContent = reviewCountTotal;
-  document.getElementById('summary-total-count').textContent = summaryActivity.length;
+  document.getElementById('summary-total-count').textContent = savedCount + reviewCountTotal;
   document.getElementById('summary-average-rating').textContent = avgSubmittedRating ? avgSubmittedRating.toFixed(1) : '--';
   document.getElementById('summary-saved-note').textContent = `${uniqueSaved} unique store${uniqueSaved!==1?'s':''}`;
   document.getElementById('summary-review-note').textContent = `${uniqueReviewed} unique store${uniqueReviewed!==1?'s':''}`;
-  document.getElementById('summary-total-note').textContent = latestItem ? `Latest: ${latestItem.type === 'review' ? 'review' : 'save'}` : 'No activity yet';
+  document.getElementById('summary-total-note').textContent = latestItem ? `Latest: ${latestItem.type === 'review' ? 'review' : latestItem.type === 'removed' ? 'removed save' : 'save'}` : 'No activity yet';
   document.getElementById('summary-rating-note').textContent = reviewRatings.length ? `${reviewRatings.length} rated review${reviewRatings.length!==1?'s':''}` : 'Submitted reviews';
   document.getElementById('summary-sub').textContent = `${reviewCountTotal} review${reviewCountTotal!==1?'s':''} written · ${savedCount} store${savedCount!==1?'s':''} saved`;
 
   renderSummaryHighlights(savedItems, reviewItems, avgSubmittedRating);
-  renderSummaryCategories();
+  renderSummaryCategories(savedItems, reviewItems);
 
-  if (!summaryActivity.length) {
+  if (!summaryActivity.length && !savedCount) {
     report.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-7"/></svg></div><div class="empty-title">No report activity yet</div><div class="empty-sub">Saved stores and submitted reviews will appear here.</div></div>`;
     return;
   }
 
   report.innerHTML = summaryActivity.map(item=>{
     const when = new Date(item.at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
-    const label = item.type === 'review' ? 'Review Written' : 'Store Saved';
+    const label = item.type === 'review' ? 'Review Written' : item.type === 'removed' ? 'Store Removed' : 'Store Saved';
     const category = getSummaryCategory(item);
     const meta = [
       category ? CATEGORIES[category]?.label : '',
@@ -1564,7 +1587,9 @@ function renderSummaryReport() {
     ].filter(Boolean).join(' · ');
     const detail = item.type === 'review'
       ? `Reviewed ${escapeHTML(item.businessName)}${item.detail ? `: "${escapeHTML(item.detail)}"` : ''}`
-      : `Saved ${escapeHTML(item.businessName)}`;
+      : item.type === 'removed'
+        ? `Removed ${escapeHTML(item.businessName)} from saved stores`
+        : `Saved ${escapeHTML(item.businessName)}`;
     return `<div class="summary-row"><div class="summary-type">${label}</div><div><div class="summary-detail">${detail}</div>${meta ? `<div class="summary-meta">${escapeHTML(meta)}</div>` : ''}</div><div class="summary-date">${when}</div></div>`;
   }).join('');
 }
@@ -1588,10 +1613,11 @@ function topSummaryCategory(items) {
 function renderSummaryHighlights(savedItems, reviewItems, avgSubmittedRating) {
   const el = document.getElementById('summary-highlights');
   if (!el) return;
-  const savedShare = summaryActivity.length ? Math.round((savedItems.length / summaryActivity.length) * 100) : 0;
-  const reviewShare = summaryActivity.length ? Math.round((reviewItems.length / summaryActivity.length) * 100) : 0;
+  const activityTotal = savedItems.length + reviewItems.length;
+  const savedShare = activityTotal ? Math.round((savedItems.length / activityTotal) * 100) : 0;
+  const reviewShare = activityTotal ? Math.round((reviewItems.length / activityTotal) * 100) : 0;
   const latest = summaryActivity[0];
-  const latestText = latest ? `${latest.type === 'review' ? 'Review' : 'Save'}: ${latest.businessName}` : 'None yet';
+  const latestText = latest ? `${latest.type === 'review' ? 'Review' : latest.type === 'removed' ? 'Removed save' : 'Save'}: ${latest.businessName}` : 'None yet';
   const topSaved = topSummaryCategory(savedItems);
   const topReviewed = topSummaryCategory(reviewItems);
   el.innerHTML = [
@@ -1603,11 +1629,11 @@ function renderSummaryHighlights(savedItems, reviewItems, avgSubmittedRating) {
   ].map(([label, value])=>`<div class="summary-metric-row"><div class="summary-metric-label">${label}</div><div class="summary-metric-value">${escapeHTML(value)}</div></div>`).join('');
 }
 
-function renderSummaryCategories() {
+function renderSummaryCategories(savedItems=[], reviewItems=[]) {
   const el = document.getElementById('summary-category-breakdown');
   if (!el) return;
   const counts = {};
-  summaryActivity.forEach(item=>{
+  [...savedItems, ...reviewItems].forEach(item=>{
     const cat = getSummaryCategory(item);
     if (cat) counts[cat] = (counts[cat] || 0) + 1;
   });
@@ -1937,16 +1963,24 @@ function renderList() {
 function renderFavorites() {
   const list = getFiltered(true);
   const grid = document.getElementById('fav-grid');
+  const totalSaved = BUSINESSES.filter(b=>favorites.has(b.id)).length;
+  const q = (document.getElementById('sidebar-search')?.value || '').trim();
   if (list.length===0) {
     grid.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div><div class="empty-title">No saved businesses yet</div><div class="empty-sub">Click the ♡ on any business to save it here</div></div>`;
   } else { grid.innerHTML = list.map(bizCardHTML).join(''); }
-  document.getElementById('fav-list-count').textContent = `${list.length} saved`;
+  document.getElementById('fav-list-count').textContent = q ? `${list.length} of ${totalSaved} saved` : `${totalSaved} saved`;
 }
 
 function toggleFav(id) {
-  if (favorites.has(id)) { favorites.delete(id); showToast('Removed from saved'); }
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    saveFavorites();
+    addSummaryActivity('removed', id);
+    showToast('Removed from saved');
+  }
   else {
     favorites.add(id);
+    saveFavorites();
     addSummaryActivity('saved', id);
     showToast('Saved!');
   }
@@ -1955,6 +1989,7 @@ function toggleFav(id) {
   if (activeTab==='favorites') renderFavorites();
   if (activeTab==='summary') renderSummaryReport();
   if (currentBizId===id) refreshModalFavBtn();
+  updateMapMarkers();
 }
 
 function toggleFavFromModal() { if (!currentBizId) return; toggleFav(currentBizId); }
