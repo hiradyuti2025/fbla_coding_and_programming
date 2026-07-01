@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -654,13 +655,29 @@
   .section-title { font-size: 18px; font-weight: 800; }
   .section-sub { font-size: 12px; color: var(--text3); }
 
-  .summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
   .summary-stat {
     background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
     padding: 14px; box-shadow: var(--shadow);
   }
   .summary-stat-label { font-size: 11px; color: var(--text3); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
   .summary-stat-value { font-size: 28px; font-weight: 800; color: var(--text); margin-top: 4px; }
+  .summary-stat-note { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .summary-analytics { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .summary-panel {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 14px;
+  }
+  .summary-panel-title { font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+  .summary-metric-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-metric-row:last-child { border-bottom: none; }
+  .summary-metric-label { color: var(--text2); }
+  .summary-metric-value { color: var(--text); font-weight: 800; text-align: right; }
+  .summary-bar-row { display: grid; grid-template-columns: minmax(95px, 150px) 1fr 36px; gap: 10px; align-items: center; margin: 9px 0; font-size: 12px; }
+  .summary-bar-label { color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .summary-bar-track { height: 8px; border-radius: 99px; background: var(--surface2); overflow: hidden; border: 1px solid var(--border); }
+  .summary-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); min-width: 4px; }
+  .summary-bar-count { color: var(--text3); font-weight: 800; text-align: right; }
   .summary-report {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     box-shadow: var(--shadow); overflow: hidden;
@@ -672,9 +689,11 @@
   .summary-row:last-child { border-bottom: none; }
   .summary-type { font-weight: 800; color: var(--accent); }
   .summary-detail { color: var(--text); }
+  .summary-meta { color: var(--text3); font-size: 11px; margin-top: 2px; }
   .summary-date { color: var(--text3); font-size: 12px; text-align: right; }
   @media (max-width: 768px) {
     .summary-grid { grid-template-columns: 1fr; }
+    .summary-analytics { grid-template-columns: 1fr; }
     .summary-row { grid-template-columns: 1fr; gap: 4px; }
     .summary-date { text-align: left; }
   }
@@ -921,7 +940,7 @@
         <div class="section-header">
           <div>
             <div class="section-title">Local Directory</div>
-            <div class="section-sub" id="list-count">70 businesses</div>
+            <div class="section-sub" id="list-count">106 businesses</div>
           </div>
         </div>
         <div id="biz-grid"></div>
@@ -948,14 +967,32 @@
           <div class="summary-stat">
             <div class="summary-stat-label">Stores Saved</div>
             <div class="summary-stat-value" id="summary-saved-count">0</div>
+            <div class="summary-stat-note" id="summary-saved-note">0 unique stores</div>
           </div>
           <div class="summary-stat">
             <div class="summary-stat-label">Reviews Written</div>
             <div class="summary-stat-value" id="summary-review-count">0</div>
+            <div class="summary-stat-note" id="summary-review-note">0 unique stores</div>
           </div>
           <div class="summary-stat">
             <div class="summary-stat-label">Total Activity</div>
             <div class="summary-stat-value" id="summary-total-count">0</div>
+            <div class="summary-stat-note" id="summary-total-note">No activity yet</div>
+          </div>
+          <div class="summary-stat">
+            <div class="summary-stat-label">Avg Review Rating</div>
+            <div class="summary-stat-value" id="summary-average-rating">--</div>
+            <div class="summary-stat-note" id="summary-rating-note">Submitted reviews</div>
+          </div>
+        </div>
+        <div class="summary-analytics">
+          <div class="summary-panel">
+            <div class="summary-panel-title">Highlights</div>
+            <div id="summary-highlights"></div>
+          </div>
+          <div class="summary-panel">
+            <div class="summary-panel-title">Category Activity</div>
+            <div id="summary-category-breakdown"></div>
           </div>
         </div>
         <div class="summary-report" id="summary-report"></div>
@@ -1317,6 +1354,42 @@ const BUSINESSES = [
   { id:68, name:"Golden Spice Kitchen",       cat:'minorityowned', owned:'minority',desc:"Family-run South Asian restaurant serving authentic curries, biryanis, tandoori dishes, and fresh naan.", deals:["Lunch buffet $13.99 Mon-Fri","10% off online orders"],                             lat:40.5172, lng:-74.4142, addr:"40 Spice Rd",           phone:"(732) 555-0304", hours:"Daily 11AM-10PM",   site:"goldenspicekitchen.com",  verified:true,  trending:true  },
   { id:69, name:"Lotus Wellness & Acupuncture",cat:'minorityowned',owned:'minority',desc:"Traditional Chinese medicine, acupuncture, herbal consultations, and cupping therapy by licensed practitioners.", deals:["First session 30% off","Package of 5 sessions save $60"],                     lat:40.5038, lng:-74.4122, addr:"18 Wellness Ct",        phone:"(732) 555-0305", hours:"Mon-Sat 9AM-6PM",   site:"lotuswellnessnj.com",     verified:true,  trending:false },
   { id:70, name:"Casa Flores Boutique",        cat:'minorityowned', owned:'minority',desc:"Latina-owned clothing boutique featuring handcrafted jewelry, embroidered textiles, and artisan pieces.", deals:["10% off first visit","New arrivals every Friday"],                                lat:40.5195, lng:-74.4155, addr:"77 Flores Blvd",        phone:"(732) 555-0306", hours:"Tue-Sun 11AM-7PM",  site:"casafloresboutique.com",  verified:false, trending:true  },
+  { id:71, name:"Riverbend Noodle House",       cat:'food',          desc:"Hand-pulled noodles, broths, and dumplings served near the riverfront.", deals:["Lunch noodle bowl $11.99"], lat:40.5525, lng:-74.3825, addr:"18 Riverbend Rd", phone:"(732) 555-0311", hours:"Daily 11AM-9PM", site:"riverbendnoodles.com", verified:true, trending:false, owned:'minority' },
+  { id:72, name:"Cedar Grove Smokehouse",       cat:'food',          desc:"Slow-smoked brisket, ribs, and scratch-made sides from a neighborhood pit crew.", deals:["Family platter Fridays"], lat:40.4865, lng:-74.4628, addr:"402 Cedar Grove Rd", phone:"(732) 555-0312", hours:"Thu-Sun 12PM-9PM", site:"cedargrovesmokehouse.com", verified:false, trending:true, owned:'black' },
+  { id:73, name:"Northpoint Outfitters",        cat:'retail',        desc:"Outdoor gear, hiking basics, camping supplies, and seasonal trail maps.", deals:["15% off rain gear"], lat:40.5688, lng:-74.3982, addr:"9 Northpoint Ave", phone:"(732) 555-0313", hours:"Mon-Sat 9AM-7PM", site:"northpointoutfitters.com", verified:true, trending:false, owned:'' },
+  { id:74, name:"Elm & Echo Gifts",             cat:'retail',        desc:"Home goods, greeting cards, candles, and handmade gifts from area makers.", deals:["Free gift wrap on weekends"], lat:40.4922, lng:-74.3718, addr:"61 Elm Crossing", phone:"(732) 555-0314", hours:"Tue-Sun 10AM-6PM", site:"elmechogifts.shop", verified:false, trending:false, owned:'' },
+  { id:75, name:"Southside Alterations",        cat:'services',      desc:"Tailoring, hemming, repairs, and custom fitting with quick turnaround.", deals:["Same-week hems from $12"], lat:40.4744, lng:-74.4388, addr:"210 Southside Ave", phone:"(732) 555-0315", hours:"Mon-Sat 9AM-6PM", site:"southsidealterations.com", verified:true, trending:false, owned:'minority' },
+  { id:76, name:"Parkway Courier Co.",          cat:'services',      desc:"Local courier, document drop-off, and small package delivery for businesses.", deals:["First delivery 20% off"], lat:40.5595, lng:-74.4495, addr:"88 Parkway Loop", phone:"(732) 555-0316", hours:"Mon-Fri 7AM-7PM", site:"parkwaycourier.co", verified:false, trending:true, owned:'' },
+  { id:77, name:"Oak Ridge Pediatrics",         cat:'health',        desc:"Pediatric checkups, vaccines, sick visits, and family-friendly care.", deals:["New patient meet-and-greet"], lat:40.5662, lng:-74.3655, addr:"17 Oak Ridge Dr", phone:"(732) 555-0317", hours:"Mon-Fri 8AM-5PM", site:"oakridgepediatrics.org", verified:true, trending:false, owned:'' },
+  { id:78, name:"Westfield Physical Therapy",   cat:'health',        desc:"Sports rehab, post-surgery recovery, mobility work, and injury prevention.", deals:["Free movement screen"], lat:40.4825, lng:-74.4740, addr:"340 Westfield Rd", phone:"(732) 555-0318", hours:"Mon-Sat 7AM-7PM", site:"westfieldpt.com", verified:true, trending:true, owned:'' },
+  { id:79, name:"Harbor Run Clubhouse",         cat:'fitness',       desc:"Running coaching, strength circuits, and community training groups.", deals:["Free Saturday intro run"], lat:40.5475, lng:-74.3660, addr:"2 Harbor Trail", phone:"(732) 555-0319", hours:"Daily 5AM-9PM", site:"harborrunclub.com", verified:false, trending:true, owned:'' },
+  { id:80, name:"Meadow Pilates Studio",        cat:'fitness',       desc:"Small-group reformer Pilates, mobility classes, and private sessions.", deals:["First private session 25% off"], lat:40.4890, lng:-74.3875, addr:"144 Meadow Ln", phone:"(732) 555-0320", hours:"Mon-Sun 6AM-8PM", site:"meadowpilates.com", verified:true, trending:false, owned:'minority' },
+  { id:81, name:"Willow Skin Lab",              cat:'beauty',        desc:"Facials, peels, waxing, and personalized skincare plans.", deals:["Mini facial $49"], lat:40.5578, lng:-74.3938, addr:"29 Willow Terrace", phone:"(732) 555-0321", hours:"Tue-Sat 10AM-7PM", site:"willowskinlab.com", verified:true, trending:false, owned:'' },
+  { id:82, name:"South Bay Braids",             cat:'beauty',        desc:"Braids, twists, natural hair care, and protective styling appointments.", deals:["Free wash with braid service"], lat:40.4775, lng:-74.4015, addr:"68 South Bay Ave", phone:"(732) 555-0322", hours:"Tue-Sun 9AM-7PM", site:"southbaybraids.com", verified:true, trending:true, owned:'black' },
+  { id:83, name:"Hilltop Auto Works",           cat:'automotive',    desc:"Diagnostics, brake service, engine repairs, and scheduled maintenance.", deals:["Free brake inspection"], lat:40.5700, lng:-74.4545, addr:"500 Hilltop Rd", phone:"(732) 555-0323", hours:"Mon-Fri 7AM-6PM", site:"hilltopautoworks.com", verified:true, trending:false, owned:'' },
+  { id:84, name:"Eastgate EV Service",          cat:'automotive',    desc:"Hybrid and electric vehicle inspections, charger installs, and maintenance.", deals:["Charger install estimate free"], lat:40.5015, lng:-74.3508, addr:"22 Eastgate Blvd", phone:"(732) 555-0324", hours:"Mon-Sat 8AM-6PM", site:"eastgateevservice.com", verified:false, trending:true, owned:'minority' },
+  { id:85, name:"Maple Learning Lab",           cat:'education',     desc:"Reading, math, and executive function support for elementary students.", deals:["Free learning assessment"], lat:40.5532, lng:-74.4718, addr:"73 Maple School Rd", phone:"(732) 555-0325", hours:"Mon-Fri 2PM-8PM", site:"maplelearninglab.com", verified:true, trending:false, owned:'' },
+  { id:86, name:"Harbor Arts Workshop",         cat:'education',     desc:"Drawing, ceramics, sewing, and portfolio classes for teens and adults.", deals:["Materials included in first class"], lat:40.5355, lng:-74.3585, addr:"11 Harbor Arts Way", phone:"(732) 555-0326", hours:"Wed-Sun 10AM-8PM", site:"harborartsworkshop.com", verified:false, trending:true, owned:'minority' },
+  { id:87, name:"Pinecrest Mini Golf",          cat:'entertainment', desc:"Outdoor mini golf course with party cabanas, snacks, and evening lights.", deals:["Family four-pack $28"], lat:40.5732, lng:-74.4115, addr:"300 Pinecrest Rd", phone:"(732) 555-0327", hours:"Daily 10AM-10PM", site:"pinecrestminigolf.com", verified:true, trending:true, owned:'' },
+  { id:88, name:"West End Game Cafe",           cat:'entertainment', desc:"Board games, tabletop nights, sandwiches, coffee, and private game rooms.", deals:["Half-price table fee Mondays"], lat:40.4818, lng:-74.4562, addr:"45 West End Ave", phone:"(732) 555-0328", hours:"Tue-Sun 12PM-11PM", site:"westendgamecafe.com", verified:false, trending:false, owned:'' },
+  { id:89, name:"Lakeside Vet Housecalls",      cat:'pets',          desc:"Mobile veterinary visits for wellness checks, vaccines, and senior pets.", deals:["First housecall fee waived"], lat:40.5608, lng:-74.3765, addr:"Mobile service area north", phone:"(732) 555-0329", hours:"Mon-Sat 8AM-6PM", site:"lakesidevethousecalls.com", verified:true, trending:true, owned:'' },
+  { id:90, name:"PupCycle Training Yard",       cat:'pets',          desc:"Outdoor dog training, agility sessions, puppy manners, and recall classes.", deals:["Intro agility class free"], lat:40.4862, lng:-74.3645, addr:"19 Training Yard Rd", phone:"(732) 555-0330", hours:"Daily 8AM-7PM", site:"pupcycletraining.com", verified:false, trending:false, owned:'' },
+  { id:91, name:"Northstar Roofing",            cat:'home',          desc:"Roof repair, gutter replacement, skylights, and storm damage inspections.", deals:["Free roof inspection"], lat:40.5715, lng:-74.4302, addr:"120 Northstar Ct", phone:"(732) 555-0331", hours:"Mon-Sat 7AM-6PM", site:"northstarroofing.com", verified:true, trending:false, owned:'' },
+  { id:92, name:"Brookline Garden Design",      cat:'home',          desc:"Landscape design, native plant beds, patios, and seasonal maintenance.", deals:["Spring design consult $75"], lat:40.4938, lng:-74.3580, addr:"27 Brookline Path", phone:"(732) 555-0332", hours:"Mon-Fri 8AM-5PM", site:"brooklinegardens.com", verified:true, trending:true, owned:'minority' },
+  { id:93, name:"Signal Point Mobile Repair",   cat:'tech',          desc:"Mobile phone and tablet repair that comes to homes, offices, and campuses.", deals:["Free screen protector with repair"], lat:40.5645, lng:-74.4690, addr:"Mobile service area west", phone:"(732) 555-0333", hours:"Mon-Sat 9AM-8PM", site:"signalpointrepair.com", verified:false, trending:true, owned:'' },
+  { id:94, name:"Cloud Desk Workspace",         cat:'tech',          desc:"Coworking, podcast rooms, device rentals, and tech support for remote workers.", deals:["Day pass $15"], lat:40.4988, lng:-74.3550, addr:"5 Cloud Desk Plaza", phone:"(732) 555-0334", hours:"Mon-Fri 7AM-9PM", site:"clouddeskworkspace.com", verified:true, trending:false, owned:'minority' },
+  { id:95, name:"Harbor Stitch Denim",          cat:'clothing',      desc:"Denim, workwear, repairs, alterations, and custom chain-stitch embroidery.", deals:["Free hemming with jeans"], lat:40.5458, lng:-74.3602, addr:"31 Harbor Stitch Rd", phone:"(732) 555-0335", hours:"Tue-Sun 11AM-7PM", site:"harborstitchdenim.com", verified:true, trending:true, owned:'' },
+  { id:96, name:"Juniper Kids Apparel",         cat:'clothing',      desc:"Children's clothes, shoes, rain gear, gifts, and school uniform basics.", deals:["Buy 2 basics get 1 half off"], lat:40.4768, lng:-74.4305, addr:"222 Juniper Ave", phone:"(732) 555-0336", hours:"Mon-Sat 10AM-7PM", site:"juniperkidsapparel.com", verified:false, trending:false, owned:'' },
+  { id:97, name:"Orchard Co-op Grocery",        cat:'grocery',       desc:"Member-supported grocery with local produce, dairy, bulk grains, and prepared meals.", deals:["Member trial week"], lat:40.5520, lng:-74.3488, addr:"8 Orchard Co-op Way", phone:"(732) 555-0337", hours:"Daily 8AM-9PM", site:"orchardcoopgrocery.com", verified:true, trending:true, owned:'' },
+  { id:98, name:"West Ridge Seafood Market",    cat:'grocery',       desc:"Fresh fish, shellfish, prepared seafood, marinades, and weekend raw bar kits.", deals:["Friday lobster roll kit"], lat:40.4828, lng:-74.4792, addr:"390 West Ridge Rd", phone:"(732) 555-0338", hours:"Tue-Sun 9AM-7PM", site:"westridgeseafood.com", verified:true, trending:false, owned:'' },
+  { id:99, name:"Moonstone Patio Bar",          cat:'nightlife',     desc:"Outdoor patio bar with seasonal cocktails, fire pits, and acoustic sets.", deals:["Sunset spritz $8"], lat:40.5485, lng:-74.4710, addr:"77 Moonstone Dr", phone:"(732) 555-0339", hours:"Wed-Sun 4PM-1AM", site:"moonstonepatio.com", verified:false, trending:true, owned:'' },
+  { id:100, name:"The Blue Lantern",            cat:'nightlife',     desc:"Neighborhood lounge with mocktails, small plates, vinyl DJs, and poetry nights.", deals:["Open mic no cover"], lat:40.4935, lng:-74.3525, addr:"16 Blue Lantern Ln", phone:"(732) 555-0340", hours:"Thu-Sun 6PM-1AM", site:"bluelanternlounge.com", verified:true, trending:false, owned:'black' },
+  { id:101, name:"Summit HR Advisors",          cat:'professional',  desc:"Human resources consulting, hiring systems, handbooks, and compliance support.", deals:["Free hiring checklist"], lat:40.5755, lng:-74.3868, addr:"55 Summit Office Park", phone:"(732) 555-0341", hours:"Mon-Fri 9AM-5PM", site:"summithradvisors.com", verified:true, trending:false, owned:'' },
+  { id:102, name:"Eastbank Notary & Tax",       cat:'professional',  desc:"Tax prep, notary services, business filings, and bilingual document help.", deals:["Notary bundle $20"], lat:40.4990, lng:-74.3480, addr:"20 Eastbank Ave", phone:"(732) 555-0342", hours:"Mon-Sat 9AM-6PM", site:"eastbanknotarytax.com", verified:false, trending:true, owned:'minority' },
+  { id:103, name:"Freedom Tech Collective",     cat:'blackowned',    owned:'black', desc:"Black-owned tech training studio offering coding bootcamps, resume labs, and mentorship.", deals:["Scholarship info night monthly"], lat:40.5635, lng:-74.4055, addr:"404 Freedom Way", phone:"(732) 555-0343", hours:"Mon-Sat 10AM-8PM", site:"freedomtechcollective.org", verified:true, trending:true },
+  { id:104, name:"Roots & Rhythm Cafe",         cat:'blackowned',    owned:'black', desc:"Cafe and community venue with coffee, soul food brunch, art walls, and open mic nights.", deals:["Open mic performer meal deal"], lat:40.4840, lng:-74.3695, addr:"72 Rhythm Row", phone:"(732) 555-0344", hours:"Wed-Sun 8AM-8PM", site:"rootsrhythmcafe.com", verified:true, trending:false },
+  { id:105, name:"Mosaic Family Pharmacy",      cat:'minorityowned', owned:'minority', desc:"Independent pharmacy with multilingual care, delivery, immunizations, and wellness checks.", deals:["Free local delivery"], lat:40.5580, lng:-74.4590, addr:"214 Mosaic Ave", phone:"(732) 555-0345", hours:"Mon-Sat 9AM-7PM", site:"mosaicfamilypharmacy.com", verified:true, trending:true },
+  { id:106, name:"Andes Travel & Money Services",cat:'minorityowned',owned:'minority', desc:"Travel booking, remittances, passport photos, translation help, and community services.", deals:["Passport photo bundle $12"], lat:40.4805, lng:-74.3945, addr:"33 Andes Plaza", phone:"(732) 555-0346", hours:"Mon-Sun 10AM-7PM", site:"andestravelservices.com", verified:false, trending:false },
 ];
 
 let reviews = {
@@ -1435,13 +1508,15 @@ function saveSummaryActivity() {
   } catch(e) {}
 }
 
-function addSummaryActivity(type, bizId, detail) {
+function addSummaryActivity(type, bizId, detail, meta={}) {
   const b = BUSINESSES.find(x=>x.id===bizId);
   summaryActivity.unshift({
     type,
     bizId,
     businessName: b ? b.name : 'Unknown business',
+    category: b ? b.cat : '',
     detail: detail || '',
+    rating: meta.rating || null,
     at: new Date().toISOString()
   });
   summaryActivity = summaryActivity.slice(0, 100);
@@ -1452,12 +1527,27 @@ function addSummaryActivity(type, bizId, detail) {
 function renderSummaryReport() {
   const report = document.getElementById('summary-report');
   if (!report) return;
-  const savedCount = summaryActivity.filter(item=>item.type==='saved').length;
-  const reviewCountTotal = summaryActivity.filter(item=>item.type==='review').length;
+  const savedItems = summaryActivity.filter(item=>item.type==='saved');
+  const reviewItems = summaryActivity.filter(item=>item.type==='review');
+  const savedCount = savedItems.length;
+  const reviewCountTotal = reviewItems.length;
+  const uniqueSaved = new Set(savedItems.map(item=>item.bizId)).size;
+  const uniqueReviewed = new Set(reviewItems.map(item=>item.bizId)).size;
+  const reviewRatings = reviewItems.map(item=>parseFloat(item.rating)).filter(r=>Number.isFinite(r));
+  const avgSubmittedRating = reviewRatings.length ? reviewRatings.reduce((sum, rating)=>sum + rating, 0) / reviewRatings.length : 0;
+  const latestItem = summaryActivity[0];
   document.getElementById('summary-saved-count').textContent = savedCount;
   document.getElementById('summary-review-count').textContent = reviewCountTotal;
   document.getElementById('summary-total-count').textContent = summaryActivity.length;
+  document.getElementById('summary-average-rating').textContent = avgSubmittedRating ? avgSubmittedRating.toFixed(1) : '--';
+  document.getElementById('summary-saved-note').textContent = `${uniqueSaved} unique store${uniqueSaved!==1?'s':''}`;
+  document.getElementById('summary-review-note').textContent = `${uniqueReviewed} unique store${uniqueReviewed!==1?'s':''}`;
+  document.getElementById('summary-total-note').textContent = latestItem ? `Latest: ${latestItem.type === 'review' ? 'review' : 'save'}` : 'No activity yet';
+  document.getElementById('summary-rating-note').textContent = reviewRatings.length ? `${reviewRatings.length} rated review${reviewRatings.length!==1?'s':''}` : 'Submitted reviews';
   document.getElementById('summary-sub').textContent = `${reviewCountTotal} review${reviewCountTotal!==1?'s':''} written · ${savedCount} store${savedCount!==1?'s':''} saved`;
+
+  renderSummaryHighlights(savedItems, reviewItems, avgSubmittedRating);
+  renderSummaryCategories();
 
   if (!summaryActivity.length) {
     report.innerHTML = `<div class="empty-state"><div class="empty-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9c968f" stroke-width="1.5"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-7"/></svg></div><div class="empty-title">No report activity yet</div><div class="empty-sub">Saved stores and submitted reviews will appear here.</div></div>`;
@@ -1467,10 +1557,70 @@ function renderSummaryReport() {
   report.innerHTML = summaryActivity.map(item=>{
     const when = new Date(item.at).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
     const label = item.type === 'review' ? 'Review Written' : 'Store Saved';
+    const category = getSummaryCategory(item);
+    const meta = [
+      category ? CATEGORIES[category]?.label : '',
+      item.type === 'review' && item.rating ? `${item.rating}/5 rating` : ''
+    ].filter(Boolean).join(' · ');
     const detail = item.type === 'review'
       ? `Reviewed ${escapeHTML(item.businessName)}${item.detail ? `: "${escapeHTML(item.detail)}"` : ''}`
       : `Saved ${escapeHTML(item.businessName)}`;
-    return `<div class="summary-row"><div class="summary-type">${label}</div><div class="summary-detail">${detail}</div><div class="summary-date">${when}</div></div>`;
+    return `<div class="summary-row"><div class="summary-type">${label}</div><div><div class="summary-detail">${detail}</div>${meta ? `<div class="summary-meta">${escapeHTML(meta)}</div>` : ''}</div><div class="summary-date">${when}</div></div>`;
+  }).join('');
+}
+
+function getSummaryCategory(item) {
+  if (item.category) return item.category;
+  const b = BUSINESSES.find(x=>x.id===item.bizId);
+  return b ? b.cat : '';
+}
+
+function topSummaryCategory(items) {
+  const counts = {};
+  items.forEach(item=>{
+    const cat = getSummaryCategory(item);
+    if (cat) counts[cat] = (counts[cat] || 0) + 1;
+  });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  return top ? `${CATEGORIES[top[0]]?.label || top[0]} (${top[1]})` : 'None yet';
+}
+
+function renderSummaryHighlights(savedItems, reviewItems, avgSubmittedRating) {
+  const el = document.getElementById('summary-highlights');
+  if (!el) return;
+  const savedShare = summaryActivity.length ? Math.round((savedItems.length / summaryActivity.length) * 100) : 0;
+  const reviewShare = summaryActivity.length ? Math.round((reviewItems.length / summaryActivity.length) * 100) : 0;
+  const latest = summaryActivity[0];
+  const latestText = latest ? `${latest.type === 'review' ? 'Review' : 'Save'}: ${latest.businessName}` : 'None yet';
+  const topSaved = topSummaryCategory(savedItems);
+  const topReviewed = topSummaryCategory(reviewItems);
+  el.innerHTML = [
+    ['Top saved category', topSaved],
+    ['Top reviewed category', topReviewed],
+    ['Activity mix', `${savedShare}% saves / ${reviewShare}% reviews`],
+    ['Average submitted rating', avgSubmittedRating ? `${avgSubmittedRating.toFixed(1)} out of 5` : 'None yet'],
+    ['Latest activity', latestText]
+  ].map(([label, value])=>`<div class="summary-metric-row"><div class="summary-metric-label">${label}</div><div class="summary-metric-value">${escapeHTML(value)}</div></div>`).join('');
+}
+
+function renderSummaryCategories() {
+  const el = document.getElementById('summary-category-breakdown');
+  if (!el) return;
+  const counts = {};
+  summaryActivity.forEach(item=>{
+    const cat = getSummaryCategory(item);
+    if (cat) counts[cat] = (counts[cat] || 0) + 1;
+  });
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0, 8);
+  if (!entries.length) {
+    el.innerHTML = `<div class="empty-sub">Category analytics will appear after people save stores or write reviews.</div>`;
+    return;
+  }
+  const max = Math.max(...entries.map(([,count])=>count));
+  el.innerHTML = entries.map(([cat, count])=>{
+    const category = CATEGORIES[cat] || { label: cat, color: 'var(--accent)' };
+    const width = Math.max(8, Math.round((count / max) * 100));
+    return `<div class="summary-bar-row"><div class="summary-bar-label">${escapeHTML(category.label)}</div><div class="summary-bar-track"><div class="summary-bar-fill" style="width:${width}%;background:${category.color}"></div></div><div class="summary-bar-count">${count}</div></div>`;
   }).join('');
 }
 
@@ -1734,6 +1884,10 @@ function updateMapMarkers() {
     </div>`;
     L.marker([b.lat, b.lng], {icon}).bindPopup(popup, { maxWidth: 250, className: 'custom-popup' }).addTo(markerLayer);
   });
+  if (list.length && map) {
+    const bounds = L.latLngBounds(list.map(b=>[b.lat, b.lng]));
+    map.fitBounds(bounds, { padding: [42, 42], maxZoom: activeCat === 'all' ? 12 : 13 });
+  }
 }
 
 window._openBiz = function(id) { const b = BUSINESSES.find(x=>x.id===id); if (b) openDetail(b); };
@@ -2062,7 +2216,7 @@ function submitReview() {
   if (!reviews[reviewTargetId]) reviews[reviewTargetId] = [];
   reviews[reviewTargetId].push({ rating: reviewRating, text, author, date, helpful:0 });
   reviewSubmitLog.push({ bizId: reviewTargetId, time: Date.now() });
-  addSummaryActivity('review', reviewTargetId, text);
+  addSummaryActivity('review', reviewTargetId, text, { rating: reviewRating });
   closeReview();
   updateStats();
   showToast('Review submitted for moderation!');
